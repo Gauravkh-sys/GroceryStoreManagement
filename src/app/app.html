@@ -1,6 +1,6 @@
 @if (isLoginScreen()) {
   <app-login-screen
-    (browseStore)="isLoginScreen.set(false)"
+    (browseStore)="browseAsGuest()"
     (signedIn)="completeDemoLogin($event)"
   />
 } 
@@ -77,6 +77,11 @@
   </header>
 
   <main class="mx-auto min-w-0 max-w-[1440px] px-3 pb-14 pt-5 sm:px-7 sm:pt-8 lg:px-10">
+    @if (persistenceError()) {
+      <p class="mb-5 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950" role="alert">
+        {{ language.text('Demo data could not be saved. Changes may be lost after refresh.') }}
+      </p>
+    }
     @if (activeView() === 'shop') {
       <section class="hero-panel relative mb-8 overflow-hidden rounded-[24px] px-6 py-7 sm:mb-9 sm:px-10 sm:py-10 lg:px-14 lg:py-12">
         <div class="relative z-10 max-w-[530px]">

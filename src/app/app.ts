@@ -62,6 +62,7 @@ export class App {
   readonly isCartOpen = signal(false);
   readonly toastMessage = signal<string | null>(null);
   readonly selectedBill = signal<StoreOrder | null>(null);
+  readonly persistenceError = this.store.persistenceError;
   readonly checkoutName = new FormControl('', { nonNullable: true });
   readonly checkoutMobile = new FormControl('', { nonNullable: true });
   readonly searchControl = new FormControl('', { nonNullable: true });
@@ -131,6 +132,14 @@ export class App {
     this.currentMobile.set(session.mobile);
     this.checkoutMobile.setValue(session.mobile);
     this.activeView.set(session.role === 'manager' ? 'dashboard' : 'shop');
+    this.isLoginScreen.set(false);
+  }
+
+  browseAsGuest(): void {
+    this.currentRole.set('guest');
+    this.currentMobile.set('');
+    this.checkoutMobile.reset('');
+    this.activeView.set('shop');
     this.isLoginScreen.set(false);
   }
 

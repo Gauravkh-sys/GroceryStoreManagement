@@ -56,6 +56,7 @@ export class GroceryStoreService {
   private readonly unitState = signal<string[]>(INITIAL_UNITS);
   private readonly orderState = signal<StoreOrder[]>([]);
   private readonly requestState = signal<ProductRequest[]>([]);
+  readonly persistenceError = signal(false);
 
   readonly products = this.productState.asReadonly();
   readonly categories = this.categoryState.asReadonly();
@@ -407,13 +408,25 @@ export class GroceryStoreService {
   }
 
   addProduct(product: Omit<Product, 'id'>): boolean {
-    if (!this.isCategoryActive(product.category)) {
+    const name = product.name.trim();
+    if (
+      name.length === 0 ||
+      name.length > 60 ||
+      !Number.isFinite(product.price) ||
+      product.price <= 0 ||
+      !Number.isInteger(product.stock) ||
+      product.stock < 0 ||
+      product.stock > 9999 ||
+      !this.isCategoryActive(product.category) ||
+      !this.unitState().includes(product.unit)
+    ) {
       return false;
     }
 
     this.productState.update((products) => [
       {
         ...product,
+        name,
         id: `product-${globalThis.crypto.randomUUID()}`,
       },
       ...products,
@@ -462,42 +475,109 @@ export class GroceryStoreService {
         DEMO_STORAGE_KEY,
         JSON.stringify(snapshot),
       );
+      this.persistenceError.set(false);
     } catch (error) {
       console.warn('Unable to save demo store data.', error);
+      this.persistenceError.set(true);
     }
   }
 
   private isStoreSnapshot(value: unknown): value is StoreSnapshot {
-    if (typeof value !== 'object' || value === null) {
+    if (!this.isRecord(value)) {
       return false;
     }
     const snapshot = value as Partial<StoreSnapshot>;
+    const productIds = new Set<string>();
+    const cartProductIds = new Set<string>();
+    const categoryNames = new Set<string>();
+    const unitNames = new Set<string>();
+
+    if (
+      !Array.isArray(snapshot.categories) ||
+      !snapshot.categories.every((category) => {
+        if (
+          !this.isRecord(category) ||
+          typeof category.name !== 'string' ||
+          category.name.trim().length === 0 ||
+          category.name.length > 40 ||
+          typeof category.active !== 'boolean'
+        ) {
+          return false;
+        }
+        const normalizedName = category.name.toLocaleLowerCase();
+        if (categoryNames.has(normalizedName)) {
+          return false;
+        }
+        categoryNames.add(normalizedName);
+        return true;
+      }) ||
+      !Array.isArray(snapshot.units) ||
+      !snapshot.units.every((unit) => {
+        if (typeof unit !== 'string' || unit.trim().length === 0 || unit.length > 24) {
+          return false;
+        }
+        const normalizedUnit = unit.toLocaleLowerCase();
+        if (unitNames.has(normalizedUnit)) {
+          return false;
+        }
+        unitNames.add(normalizedUnit);
+        return true;
+      })
+    ) {
+      return false;
+    }
+
     return (
       Array.isArray(snapshot.products) &&
       snapshot.products.every(
-        (product) =>
-          typeof product.id === 'string' &&
-          typeof product.name === 'string' &&
-          typeof product.category === 'string' &&
-          typeof product.price === 'number' &&
-          typeof product.stock === 'number' &&
-          typeof product.icon === 'string' &&
-          typeof product.unit === 'string',
-      ) &&
-      Array.isArray(snapshot.categories) &&
-      snapshot.categories.every(
-        (category) =>
-          typeof category.name === 'string' &&
-          typeof category.active === 'boolean',
+        (product) => {
+          if (
+            !this.isRecord(product) ||
+            typeof product.id !== 'string' ||
+            product.id.length === 0 ||
+            productIds.has(product.id) ||
+            typeof product.name !== 'string' ||
+            product.name.trim().length === 0 ||
+            product.name.length > 60 ||
+            typeof product.category !== 'string' ||
+            !categoryNames.has(product.category.toLocaleLowerCase()) ||
+            !this.isFiniteNumber(product.price) ||
+            product.price <= 0 ||
+            !Number.isInteger(product.stock) ||
+            product.stock < 0 ||
+            product.stock > 9999 ||
+            typeof product.icon !== 'string' ||
+            product.icon.length === 0 ||
+            product.icon.length > 12 ||
+            typeof product.unit !== 'string' ||
+            !unitNames.has(product.unit.toLocaleLowerCase())
+          ) {
+            return false;
+          }
+          productIds.add(product.id);
+          return true;
+        },
       ) &&
       Array.isArray(snapshot.cart) &&
       snapshot.cart.every(
-        (item) =>
-          typeof item.productId === 'string' &&
-          typeof item.quantity === 'number',
+        (item) => {
+          if (
+            !this.isRecord(item) ||
+            typeof item.productId !== 'string' ||
+            !productIds.has(item.productId) ||
+            cartProductIds.has(item.productId) ||
+            !Number.isInteger(item.quantity) ||
+            item.quantity < 1
+          ) {
+            return false;
+          }
+          cartProductIds.add(item.productId);
+          const product = snapshot.products?.find(
+            (candidate) => candidate.id === item.productId,
+          );
+          return product !== undefined && item.quantity <= product.stock;
+        },
       ) &&
-      Array.isArray(snapshot.units) &&
-      snapshot.units.every((unit) => typeof unit === 'string') &&
       Array.isArray(snapshot.orders) &&
       snapshot.orders.every((order) => this.isStoreOrder(order)) &&
       Array.isArray(snapshot.requests) &&
@@ -506,48 +586,90 @@ export class GroceryStoreService {
   }
 
   private isStoreOrder(value: unknown): value is StoreOrder {
-    if (typeof value !== 'object' || value === null) {
+    if (!this.isRecord(value)) {
       return false;
     }
     const order = value as Partial<StoreOrder>;
+    const orderProductIds = new Set<string>();
     return (
       typeof order.id === 'string' &&
-      typeof order.createdAt === 'string' &&
+      order.id.length > 0 &&
+      this.isValidDate(order.createdAt) &&
       typeof order.customerName === 'string' &&
-      typeof order.customerMobile === 'string' &&
+      order.customerName.trim().length > 0 &&
+      /^\d{10}$/.test(order.customerMobile ?? '') &&
       Array.isArray(order.items) &&
-      order.items.every(
-        (item) =>
-          typeof item.productId === 'string' &&
-          typeof item.name === 'string' &&
-          typeof item.category === 'string' &&
-          typeof item.unit === 'string' &&
-          typeof item.icon === 'string' &&
-          typeof item.unitPrice === 'number' &&
-          typeof item.quantity === 'number' &&
-          typeof item.lineTotal === 'number',
-      ) &&
-      typeof order.subtotal === 'number' &&
-      typeof order.tax === 'number' &&
-      typeof order.total === 'number' &&
+      order.items.length > 0 &&
+      order.items.every((item) => {
+        if (!this.isRecord(item)) {
+          return false;
+        }
+        if (
+          typeof item.productId !== 'string' ||
+          item.productId.length === 0 ||
+          orderProductIds.has(item.productId) ||
+          typeof item.name !== 'string' ||
+          item.name.trim().length === 0 ||
+          typeof item.category !== 'string' ||
+          typeof item.unit !== 'string' ||
+          typeof item.icon !== 'string' ||
+          !this.isFiniteNumber(item.unitPrice) ||
+          item.unitPrice <= 0 ||
+          !Number.isInteger(item.quantity) ||
+          item.quantity <= 0 ||
+          !this.isFiniteNumber(item.lineTotal) ||
+          Math.abs(item.lineTotal - item.unitPrice * item.quantity) >= 0.005
+        ) {
+          return false;
+        }
+        orderProductIds.add(item.productId);
+        return true;
+      }) &&
+      this.isFiniteNumber(order.subtotal) &&
+      order.subtotal > 0 &&
+      this.isFiniteNumber(order.tax) &&
+      Math.abs(order.tax - order.subtotal * 0.08) < 0.005 &&
+      this.isFiniteNumber(order.total) &&
+      Math.abs(order.total - order.subtotal - order.tax) < 0.005 &&
+      Math.abs(
+        order.subtotal -
+          order.items.reduce((sum, item) => sum + item.lineTotal, 0),
+      ) < 0.005 &&
       ['pending', 'completed', 'cancelled'].includes(order.status ?? '')
     );
   }
 
   private isProductRequest(value: unknown): value is ProductRequest {
-    if (typeof value !== 'object' || value === null) {
+    if (!this.isRecord(value)) {
       return false;
     }
     const request = value as Partial<ProductRequest>;
     return (
       typeof request.id === 'string' &&
-      typeof request.createdAt === 'string' &&
+      request.id.length > 0 &&
+      this.isValidDate(request.createdAt) &&
       typeof request.productName === 'string' &&
+      request.productName.trim().length >= 2 &&
+      request.productName.length <= 60 &&
       typeof request.details === 'string' &&
+      request.details.length <= 240 &&
       typeof request.customerName === 'string' &&
-      typeof request.customerMobile === 'string' &&
+      request.customerName.trim().length > 0 &&
+      /^\d{10}$/.test(request.customerMobile ?? '') &&
       ['pending', 'reviewed'].includes(request.status ?? '')
     );
+  }
+
+  private isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null;
+  }
+
+  private isFiniteNumber(value: unknown): value is number {
+    return typeof value === 'number' && Number.isFinite(value);
+  }
+
+  private isValidDate(value: unknown): value is string {
+    return typeof value === 'string' && Number.isFinite(Date.parse(value));
   }
 
   private normalizeCategoryName(name: string): string | null {

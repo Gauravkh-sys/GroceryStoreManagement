@@ -36,7 +36,7 @@
       <h2 id="top-selling-title" class="font-semibold text-[#293526]">{{ language.text('Top selling products') }}</h2>
       <p class="mt-1 text-xs text-stone-400">{{ language.text('Based on completed demo orders.') }}</p>
       <ol class="mt-4 space-y-4">
-        @for (item of topProducts(); track item.name) {
+        @for (item of topProducts(); track item.productId) {
           <li>
             <div class="mb-1.5 flex items-center justify-between gap-3 text-sm">
               <span class="min-w-0 break-words font-medium text-[#33402f]">{{ language.text(item.name) }}</span>

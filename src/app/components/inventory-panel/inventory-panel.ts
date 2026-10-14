@@ -56,7 +56,7 @@ export class InventoryPanelComponent {
   });
 
   readonly productForm = this.formBuilder.nonNullable.group({
-    name: ['', [Validators.required, Validators.maxLength(60)]],
+    name: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(60)]],
     category: [this.categories()[0] ?? '', Validators.required],
     price: [0, [Validators.required, Validators.min(0.01)]],
     stock: [1, [Validators.required, Validators.min(0), Validators.max(9999)]],
@@ -74,7 +74,8 @@ export class InventoryPanelComponent {
       return;
     }
 
-    if (!this.store.addProduct(this.productForm.getRawValue())) {
+    const product = this.productForm.getRawValue();
+    if (!this.store.addProduct({ ...product, name: product.name.trim() })) {
       this.productForm.controls.category.setErrors({ unavailable: true });
       return;
     }
