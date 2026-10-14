@@ -1,15 +1,14 @@
 import { CurrencyPipe } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { InventoryPanelComponent } from './components/inventory-panel/inventory-panel';
+import { CategoryMasterComponent } from './components/category-master/category-master';
 import { ProductCardComponent } from './components/product-card/product-card';
-import { CATEGORIES, ProductCategory } from './models/grocery.model';
 import { GroceryStoreService } from './services/grocery-store.service';
 import { ThemeService } from './services/theme.service';
 
-type StoreView = 'shop' | 'inventory';
-type CategoryFilter = 'All' | ProductCategory;
+type StoreView = 'shop' | 'inventory' | 'categories';
 
 @Component({
   selector: 'app-root',
@@ -18,15 +17,19 @@ type CategoryFilter = 'All' | ProductCategory;
     ReactiveFormsModule,
     ProductCardComponent,
     InventoryPanelComponent,
+    CategoryMasterComponent,
   ],
   templateUrl: './app.html',
 })
 export class App {
   readonly store = inject(GroceryStoreService);
   readonly theme = inject(ThemeService);
-  readonly categories: readonly CategoryFilter[] = ['All', ...CATEGORIES];
+  readonly categories = computed(() => [
+    'All',
+    ...this.store.activeCategories(),
+  ]);
   readonly activeView = signal<StoreView>('shop');
-  readonly selectedCategory = signal<CategoryFilter>('All');
+  readonly selectedCategory = signal('All');
   readonly isCartOpen = signal(false);
   readonly toastMessage = signal<string | null>(null);
   readonly searchControl = new FormControl('', { nonNullable: true });
@@ -47,7 +50,19 @@ export class App {
   );
   private toastTimer: ReturnType<typeof setTimeout> | undefined;
 
-  selectCategory(category: CategoryFilter): void {
+  constructor() {
+    effect(() => {
+      const selectedCategory = this.selectedCategory();
+      if (
+        selectedCategory !== 'All' &&
+        !this.store.activeCategories().includes(selectedCategory)
+      ) {
+        this.selectedCategory.set('All');
+      }
+    });
+  }
+
+  selectCategory(category: string): void {
     this.selectedCategory.set(category);
   }
 

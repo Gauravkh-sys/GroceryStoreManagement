@@ -1,7 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { CATEGORIES } from '../../models/grocery.model';
 import { GroceryStoreService } from '../../services/grocery-store.service';
 
 @Component({
@@ -12,11 +11,11 @@ import { GroceryStoreService } from '../../services/grocery-store.service';
 export class InventoryPanelComponent {
   private readonly formBuilder = inject(FormBuilder);
   readonly store = inject(GroceryStoreService);
-  readonly categories = CATEGORIES;
+  readonly categories = this.store.activeCategories;
 
   readonly productForm = this.formBuilder.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(60)]],
-    category: [CATEGORIES[0], Validators.required],
+    category: [this.categories()[0] ?? '', Validators.required],
     price: [0, [Validators.required, Validators.min(0.01)]],
     stock: [1, [Validators.required, Validators.min(0), Validators.max(9999)]],
     icon: ['🛒', Validators.required],
@@ -33,10 +32,14 @@ export class InventoryPanelComponent {
       return;
     }
 
-    this.store.addProduct(this.productForm.getRawValue());
+    if (!this.store.addProduct(this.productForm.getRawValue())) {
+      this.productForm.controls.category.setErrors({ unavailable: true });
+      return;
+    }
+
     this.productForm.reset({
       name: '',
-      category: CATEGORIES[0],
+      category: this.categories()[0] ?? '',
       price: 0,
       stock: 1,
       icon: '🛒',

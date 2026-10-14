@@ -19,7 +19,12 @@
   </div>
 
   <div class="flex flex-1 flex-col pt-3.5">
-    <p class="text-[10px] font-bold uppercase tracking-[0.12em] text-[#849175]">{{ product().category }}</p>
+    <p class="text-[10px] font-bold uppercase tracking-[0.12em] text-[#849175]" [class.line-through]="!categoryIsActive()">
+      {{ product().category }}
+      @if (!categoryIsActive()) {
+        <span class="sr-only">, archived category</span>
+      }
+    </p>
     <h3 class="mt-1.5 min-h-11 text-sm font-semibold leading-5 text-[#283322] sm:text-[15px]">{{ product().name }}</h3>
     <p class="mt-1 text-xs text-stone-400">per {{ product().unit }}</p>
     <div class="mt-auto flex items-center justify-between gap-2 pt-4">
@@ -27,8 +32,9 @@
       <button
         type="button"
         class="add-button inline-flex h-9 items-center justify-center gap-1.5 rounded-full bg-[#31723b] px-3 text-xs font-semibold text-white transition hover:bg-[#245e2e] focus:outline-none focus:ring-2 focus:ring-[#31723b] focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-stone-200 disabled:text-stone-400"
-        [disabled]="product().stock === 0"
+        [disabled]="product().stock === 0 || !categoryIsActive()"
         [attr.aria-label]="'Add ' + product().name + ' to cart'"
+        [attr.title]="categoryIsActive() ? null : 'This product’s category is archived.'"
         (click)="add.emit(product().id)"
       >
         <span aria-hidden="true" class="text-base leading-none">+</span>

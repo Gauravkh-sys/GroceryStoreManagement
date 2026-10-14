@@ -1,6 +1,7 @@
 import { CurrencyPipe } from '@angular/common';
-import { Component, input, output } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { Product } from '../../models/grocery.model';
+import { GroceryStoreService } from '../../services/grocery-store.service';
 
 @Component({
   selector: 'app-product-card',
@@ -8,6 +9,10 @@ import { Product } from '../../models/grocery.model';
   templateUrl: './product-card.html',
 })
 export class ProductCardComponent {
+  private readonly store = inject(GroceryStoreService);
   readonly product = input.required<Product>();
   readonly add = output<string>();
+  readonly categoryIsActive = computed(() =>
+    this.store.isCategoryActive(this.product().category),
+  );
 }

@@ -3,15 +3,34 @@ import { INITIAL_PRODUCTS } from '../data/grocery-data';
 import {
   CartItem,
   DetailedCartItem,
+  GroceryCategory,
   Product,
+  CATEGORIES,
 } from '../models/grocery.model';
+
+export type CategoryMutationResult =
+  | 'success'
+  | 'invalid-name'
+  | 'duplicate'
+  | 'not-found'
+  | 'already-archived'
+  | 'already-active';
 
 @Injectable({ providedIn: 'root' })
 export class GroceryStoreService {
   private readonly productState = signal<Product[]>(INITIAL_PRODUCTS);
   private readonly cartState = signal<CartItem[]>([]);
+  private readonly categoryState = signal<GroceryCategory[]>(
+    CATEGORIES.map((name) => ({ name, active: true })),
+  );
 
   readonly products = this.productState.asReadonly();
+  readonly categories = this.categoryState.asReadonly();
+  readonly activeCategories = computed(() =>
+    this.categoryState()
+      .filter((category) => category.active)
+      .map((category) => category.name),
+  );
   readonly cartItems = computed<DetailedCartItem[]>(() =>
     this.cartState()
       .map((item) => {
@@ -38,9 +57,107 @@ export class GroceryStoreService {
   readonly tax = computed(() => this.subtotal() * 0.08);
   readonly total = computed(() => this.subtotal() + this.tax());
 
+  isCategoryActive(name: string): boolean {
+    return this.categoryState().some(
+      (category) => category.name === name && category.active,
+    );
+  }
+
+  addCategory(name: string): CategoryMutationResult {
+    const normalizedName = this.normalizeCategoryName(name);
+    if (!normalizedName) {
+      return 'invalid-name';
+    }
+    if (this.hasCategoryName(normalizedName)) {
+      return 'duplicate';
+    }
+
+    this.categoryState.update((categories) => [
+      ...categories,
+      { name: normalizedName, active: true },
+    ]);
+    return 'success';
+  }
+
+  renameCategory(
+    currentName: string,
+    newName: string,
+  ): CategoryMutationResult {
+    const category = this.categoryState().find(
+      (item) => item.name === currentName,
+    );
+    if (!category) {
+      return 'not-found';
+    }
+
+    const normalizedName = this.normalizeCategoryName(newName);
+    if (!normalizedName) {
+      return 'invalid-name';
+    }
+    if (
+      this.categoryState().some(
+        (item) =>
+          item.name !== currentName &&
+          this.namesMatch(item.name, normalizedName),
+      )
+    ) {
+      return 'duplicate';
+    }
+    if (normalizedName === currentName) {
+      return 'success';
+    }
+
+    this.categoryState.update((categories) =>
+      categories.map((item) =>
+        item.name === currentName ? { ...item, name: normalizedName } : item,
+      ),
+    );
+    this.productState.update((products) =>
+      products.map((product) =>
+        product.category === currentName
+          ? { ...product, category: normalizedName }
+          : product,
+      ),
+    );
+    return 'success';
+  }
+
+  archiveCategory(name: string): CategoryMutationResult {
+    const category = this.categoryState().find((item) => item.name === name);
+    if (!category) {
+      return 'not-found';
+    }
+    if (!category.active) {
+      return 'already-archived';
+    }
+    this.categoryState.update((categories) =>
+      categories.map((item) =>
+        item.name === name ? { ...item, active: false } : item,
+      ),
+    );
+    return 'success';
+  }
+
+  restoreCategory(name: string): CategoryMutationResult {
+    const category = this.categoryState().find((item) => item.name === name);
+    if (!category) {
+      return 'not-found';
+    }
+    if (category.active) {
+      return 'already-active';
+    }
+
+    this.categoryState.update((categories) =>
+      categories.map((item) =>
+        item.name === name ? { ...item, active: true } : item,
+      ),
+    );
+    return 'success';
+  }
+
   addToCart(productId: string): boolean {
     const product = this.productState().find((item) => item.id === productId);
-    if (!product) {
+    if (!product || !this.isCategoryActive(product.category)) {
       return false;
     }
 
@@ -74,7 +191,7 @@ export class GroceryStoreService {
       return true;
     }
 
-    if (quantity > product.stock) {
+    if (!this.isCategoryActive(product.category) || quantity > product.stock) {
       return false;
     }
 
@@ -122,7 +239,11 @@ export class GroceryStoreService {
     return true;
   }
 
-  addProduct(product: Omit<Product, 'id'>): void {
+  addProduct(product: Omit<Product, 'id'>): boolean {
+    if (!this.isCategoryActive(product.category)) {
+      return false;
+    }
+
     this.productState.update((products) => [
       {
         ...product,
@@ -130,6 +251,7 @@ export class GroceryStoreService {
       },
       ...products,
     ]);
+    return true;
   }
 
   deleteProduct(productId: string): void {
@@ -137,5 +259,22 @@ export class GroceryStoreService {
       products.filter((product) => product.id !== productId),
     );
     this.removeFromCart(productId);
+  }
+
+  private normalizeCategoryName(name: string): string | null {
+    const normalizedName = name.trim();
+    return normalizedName.length > 0 && normalizedName.length <= 40
+      ? normalizedName
+      : null;
+  }
+
+  private hasCategoryName(name: string): boolean {
+    return this.categoryState().some((category) =>
+      this.namesMatch(category.name, name),
+    );
+  }
+
+  private namesMatch(left: string, right: string): boolean {
+    return left.toLocaleLowerCase() === right.toLocaleLowerCase();
   }
 }

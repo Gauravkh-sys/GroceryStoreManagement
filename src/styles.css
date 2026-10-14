@@ -105,6 +105,10 @@ html[data-theme="dark"] .bg-emerald-50 {
   background-color: #1f3829;
 }
 
+html[data-theme="dark"] .border-emerald-200 {
+  border-color: #35543d;
+}
+
 html[data-theme="dark"] .hero-panel {
   background:
     radial-gradient(ellipse at 79% 13%, rgb(218 232 201 / 9%), transparent 33%),
@@ -142,6 +146,7 @@ html[data-theme="dark"] [class~="text-[#2d5732]"],
 html[data-theme="dark"] [class~="text-[#3d6037]"],
 html[data-theme="dark"] [class~="text-[#52614a]"],
 html[data-theme="dark"] [class~="text-[#52634b]"],
+html[data-theme="dark"] [class~="text-[#4c6845]"],
 html[data-theme="dark"] [class~="text-[#617054]"],
 html[data-theme="dark"] [class~="text-[#65705d]"],
 html[data-theme="dark"] [class~="text-[#697461]"],
@@ -154,7 +159,9 @@ html[data-theme="dark"] [class~="text-stone-500"],
 html[data-theme="dark"] [class~="text-stone-600"],
 html[data-theme="dark"] [class~="text-stone-700"],
 html[data-theme="dark"] [class~="text-amber-800"],
-html[data-theme="dark"] [class~="text-amber-900"] {
+html[data-theme="dark"] [class~="text-amber-900"],
+html[data-theme="dark"] [class~="text-emerald-800"],
+html[data-theme="dark"] [class~="text-rose-700"] {
   color: #c4d0be;
 }
 

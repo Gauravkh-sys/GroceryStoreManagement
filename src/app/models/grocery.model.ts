@@ -6,7 +6,12 @@ export const CATEGORIES = [
   'Household Essentials',
 ] as const;
 
-export type ProductCategory = (typeof CATEGORIES)[number];
+export type ProductCategory = string;
+
+export interface GroceryCategory {
+  name: ProductCategory;
+  active: boolean;
+}
 
 export interface Product {
   id: string;
