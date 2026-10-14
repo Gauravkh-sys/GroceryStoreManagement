@@ -1,4 +1,4 @@
-<main class="login-scene relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-8 sm:px-8">
+<main class="login-scene relative flex min-h-[100svh] flex-col items-center justify-center gap-5 overflow-x-hidden px-3 pb-5 pt-20 sm:px-6 sm:py-20">
   <div class="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
     <div class="login-glow login-glow-one absolute -left-32 -top-32 h-96 w-96 rounded-full"></div>
     <div class="login-glow login-glow-two absolute -bottom-40 -right-32 h-[34rem] w-[34rem] rounded-full"></div>
@@ -28,8 +28,8 @@
     </button>
   </div>
 
-  <section class="login-glass relative z-[1] grid w-full max-w-[1040px] overflow-hidden rounded-[30px] lg:min-h-[620px] lg:grid-cols-[1fr_0.92fr]">
-    <div class="login-story relative hidden flex-col justify-between overflow-hidden p-10 lg:flex xl:p-14">
+  <section class="login-glass relative z-[1] grid w-full max-w-[1040px] min-w-0 overflow-hidden rounded-2xl sm:rounded-[30px] lg:min-h-[620px] lg:grid-cols-[1fr_0.92fr]">
+    <div class="login-story relative hidden min-w-0 flex-col justify-between overflow-hidden p-8 lg:flex xl:p-14">
       <div class="relative z-10">
         <div class="flex items-center gap-3">
           <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#31723b] text-2xl text-white shadow-lg shadow-[#31723b]/20" aria-hidden="true">✿</span>
@@ -56,8 +56,8 @@
       </div>
     </div>
 
-    <div class="login-form-panel flex items-center justify-center p-6 sm:p-10 lg:p-12 xl:p-14">
-      <div class="w-full max-w-[390px]">
+    <div class="login-form-panel flex min-w-0 items-center justify-center p-4 sm:p-8 lg:p-10 xl:p-14">
+      <div class="w-full min-w-0 max-w-[390px]">
         <div class="mb-8 lg:hidden">
           <div class="flex items-center gap-2.5">
             <span class="flex h-11 w-11 items-center justify-center rounded-[14px] bg-[#31723b] text-xl text-white" aria-hidden="true">✿</span>
@@ -66,27 +66,27 @@
         </div>
 
         <p class="text-xs font-bold uppercase tracking-[0.18em] text-[#6b8b5d]">{{ language.text('Welcome to Durvijay General Store') }}</p>
-        <h2 class="mt-2 text-3xl font-bold tracking-tight text-[#293526]">{{ language.text('Sign in to your account') }}</h2>
+        <h2 class="mt-2 text-[clamp(1.5rem,7vw,1.875rem)] font-bold leading-tight tracking-tight text-[#293526]">{{ language.text('Sign in to your account') }}</h2>
         <p class="mt-2 text-sm leading-6 text-[#71806a]">{{ language.text('Choose how you want to continue') }}</p>
 
-        <div class="login-role-switch mt-7 grid grid-cols-2 rounded-2xl p-1.5" role="group" [attr.aria-label]="language.text('Login options')">
+        <div class="login-role-switch mt-6 grid grid-cols-2 rounded-2xl p-1 sm:mt-7 sm:p-1.5" role="group" [attr.aria-label]="language.text('Login options')">
           <button
             type="button"
-            class="flex min-h-12 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#31723b]"
+            class="flex min-h-12 min-w-0 items-center justify-center gap-1 rounded-xl px-1.5 text-xs font-semibold leading-tight transition focus:outline-none focus:ring-2 focus:ring-[#31723b] sm:gap-2 sm:px-3 sm:text-sm"
             [class.login-role-active]="role() === 'customer'"
             [attr.aria-pressed]="role() === 'customer'"
             (click)="selectRole('customer')"
           ><span aria-hidden="true">🛍️</span>{{ language.text('Customer') }}</button>
           <button
             type="button"
-            class="flex min-h-12 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#31723b]"
+            class="flex min-h-12 min-w-0 items-center justify-center gap-1 rounded-xl px-1.5 text-xs font-semibold leading-tight transition focus:outline-none focus:ring-2 focus:ring-[#31723b] sm:gap-2 sm:px-3 sm:text-sm"
             [class.login-role-active]="role() === 'manager'"
             [attr.aria-pressed]="role() === 'manager'"
             (click)="selectRole('manager')"
           ><span aria-hidden="true">🏪</span>{{ language.text('Store manager') }}</button>
         </div>
 
-        <form class="mt-6 space-y-4" (submit)="attemptSignIn(); $event.preventDefault()" [attr.aria-label]="language.text('Sign in form')" novalidate>
+        <form class="mt-5 space-y-4 sm:mt-6" (submit)="attemptSignIn(); $event.preventDefault()" [attr.aria-label]="language.text('Sign in form')" novalidate>
           <div>
             <label for="login-identifier" class="mb-1.5 block text-sm font-semibold text-[#394735]">{{ language.text('Mobile number') }}</label>
             <input
@@ -151,5 +151,5 @@
     </div>
   </section>
 
-  <p class="absolute bottom-3 left-0 right-0 z-10 px-4 text-center text-[10px] text-[#798574] sm:bottom-5 sm:text-xs">{{ language.text('A smoother way to shop and manage your store.') }}</p>
+  <p class="relative z-10 max-w-full px-3 text-center text-[10px] leading-4 text-[#798574] sm:text-xs">{{ language.text('A smoother way to shop and manage your store.') }}</p>
 </main>

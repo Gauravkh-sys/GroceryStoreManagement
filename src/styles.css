@@ -370,6 +370,12 @@ button:disabled {
   box-shadow: 0 16px 32px rgb(47 72 39 / 12%);
 }
 
+@media (max-width: 380px) {
+  .product-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 html[data-theme="dark"] .login-scene {
   background:
     radial-gradient(ellipse at 12% 10%, rgb(73 99 63 / 42%), transparent 38%),

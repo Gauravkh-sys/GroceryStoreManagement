@@ -5,7 +5,7 @@
       <h1 class="mt-1 text-2xl font-bold tracking-tight text-[#263423] sm:text-3xl">{{ language.text('Inventory') }}</h1>
       <p class="mt-1 text-sm text-stone-500">{{ language.text('Keep your shelves fresh and up to date.') }}</p>
     </div>
-    <div class="grid grid-cols-2 gap-3">
+    <div class="grid grid-cols-1 gap-3 min-[380px]:grid-cols-2">
       <div class="rounded-2xl border border-[#e8eddf] bg-white px-5 py-3">
         <p class="text-xs text-stone-500">{{ language.text('Products') }}</p>
         <p class="mt-1 text-xl font-bold text-[#2d5732]">{{ store.products().length }}</p>
@@ -19,12 +19,12 @@
 
   <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_330px]">
     <div class="overflow-hidden rounded-2xl border border-stone-100 bg-white shadow-sm">
-      <div class="flex items-center justify-between border-b border-stone-100 px-5 py-4">
-        <div>
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-stone-100 px-3 py-4 sm:px-5">
+        <div class="min-w-0">
           <h2 class="font-semibold text-[#293526]">{{ language.text('Product stock') }}</h2>
           <p class="mt-0.5 text-xs text-stone-400">{{ language.text('Changes are saved in this session.') }}</p>
         </div>
-        <span class="rounded-full bg-[#f0f5eb] px-3 py-1 text-xs font-semibold text-[#4c6845]">{{ language.text('Live inventory') }}</span>
+        <span class="shrink-0 rounded-full bg-[#f0f5eb] px-3 py-1 text-xs font-semibold text-[#4c6845]">{{ language.text('Live inventory') }}</span>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full min-w-[590px] text-left text-sm">
@@ -43,7 +43,7 @@
                 <td class="px-5 py-3.5">
                   <div class="flex items-center gap-3">
                     <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#f3f7ed] text-xl" aria-hidden="true">{{ product.icon }}</span>
-                    <span class="font-medium text-[#33402f]">{{ language.product(product) }}</span>
+                    <span class="break-words font-medium text-[#33402f] [overflow-wrap:anywhere]">{{ language.product(product) }}</span>
                   </div>
                 </td>
                 <td class="px-4 py-3.5 text-xs text-stone-500" [class.line-through]="!store.isCategoryActive(product.category)">

@@ -1,5 +1,5 @@
 <article
-  class="product-card group flex h-full flex-col rounded-2xl border border-stone-100 bg-white p-3.5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg sm:p-4"
+  class="product-card group flex h-full min-w-0 flex-col rounded-2xl border border-stone-100 bg-white p-3 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg sm:rounded-3xl sm:p-4"
 >
   <div class="relative flex aspect-[1.38] items-center justify-center overflow-hidden rounded-xl bg-[#f3f7ed]">
     <span class="product-art select-none text-7xl transition duration-300 group-hover:scale-110 sm:text-8xl" aria-hidden="true">{{ product().icon }}</span>
@@ -25,10 +25,10 @@
         <span class="sr-only">, {{ language.text('Archived category') }}</span>
       }
     </p>
-    <h3 class="mt-1.5 min-h-11 text-sm font-semibold leading-5 text-[#283322] sm:text-[15px]">{{ language.product(product()) }}</h3>
+    <h3 class="mt-1.5 min-h-11 break-words text-sm font-semibold leading-5 text-[#283322] [overflow-wrap:anywhere] sm:text-[15px]">{{ language.product(product()) }}</h3>
     <p class="mt-1 text-xs text-stone-400">{{ language.text('per') }} {{ language.unit(product().unit) }}</p>
-    <div class="mt-auto flex items-center justify-between gap-2 pt-4">
-      <span class="text-lg font-bold tracking-tight text-[#263423]">{{ product().price | currency:'INR':'symbol':'1.2-2':language.locale() }}</span>
+    <div class="mt-auto flex flex-wrap items-center justify-between gap-2 pt-4">
+      <span class="min-w-0 text-base font-bold tracking-tight text-[#263423] sm:text-lg">{{ product().price | currency:'INR':'symbol':'1.2-2':language.locale() }}</span>
       <button
         type="button"
         class="add-button inline-flex h-9 items-center justify-center gap-1.5 rounded-full bg-[#31723b] px-3 text-xs font-semibold text-white transition hover:bg-[#245e2e] focus:outline-none focus:ring-2 focus:ring-[#31723b] focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-stone-200 disabled:text-stone-400"
