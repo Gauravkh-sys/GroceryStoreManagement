@@ -7,6 +7,7 @@ import { CategoryMasterComponent } from './components/category-master/category-m
 import { ProductCardComponent } from './components/product-card/product-card';
 import { STORE_WHATSAPP_NUMBER } from './config/store-contact';
 import { GroceryStoreService } from './services/grocery-store.service';
+import { LanguageService } from './services/language.service';
 import { ThemeService } from './services/theme.service';
 
 type StoreView = 'shop' | 'inventory' | 'categories';
@@ -24,6 +25,7 @@ type StoreView = 'shop' | 'inventory' | 'categories';
 })
 export class App {
   readonly store = inject(GroceryStoreService);
+  readonly language = inject(LanguageService);
   readonly theme = inject(ThemeService);
   readonly categories = computed(() => [
     'All',
@@ -42,32 +44,34 @@ export class App {
     const query = this.searchText().trim().toLocaleLowerCase();
     return this.store.products().filter((product) => {
       const matchesCategory = category === 'All' || product.category === category;
-      const matchesSearch = product.name.toLocaleLowerCase().includes(query);
+      const matchesSearch =
+        product.name.toLocaleLowerCase().includes(query) ||
+        this.language.product(product).toLocaleLowerCase().includes(query);
       return matchesCategory && matchesSearch;
     });
   });
   readonly whatsappOrderUrl = computed(() => {
     const items = this.store.cartItems();
     const formatPrice = (amount: number) =>
-      new Intl.NumberFormat('en-IN', {
+      new Intl.NumberFormat(this.language.locale(), {
         style: 'currency',
         currency: 'INR',
         maximumFractionDigits: 2,
       }).format(amount);
     const itemLines = items.map(
       (item) =>
-        `- ${item.product.name} (${item.product.category}) x ${item.quantity} ${item.product.unit}${item.quantity === 1 ? '' : 's'} @ ${formatPrice(item.product.price)} = ${formatPrice(item.lineTotal)}`,
+        `- ${this.language.product(item.product)} (${this.language.category(item.product.category)}) x ${item.quantity} ${this.language.unit(item.product.unit)}${item.quantity === 1 ? '' : this.language.current() === 'hi' ? '' : 's'} @ ${formatPrice(item.product.price)} = ${formatPrice(item.lineTotal)}`,
     );
     const message = [
-      'Hello Freshly Market! I would like to place this order:',
+      this.language.text('Hello Durvijay General Store! I would like to place this order:'),
       '',
       ...itemLines,
       '',
-      `Subtotal: ${formatPrice(this.store.subtotal())}`,
-      `Tax (8%): ${formatPrice(this.store.tax())}`,
-      `Total: ${formatPrice(this.store.total())}`,
+      `${this.language.text('Subtotal:')} ${formatPrice(this.store.subtotal())}`,
+      `${this.language.text('Tax (8%):')} ${formatPrice(this.store.tax())}`,
+      `${this.language.text('Total:')} ${formatPrice(this.store.total())}`,
       '',
-      'Please confirm availability and delivery or pickup details. Thank you!',
+      this.language.text('Please confirm availability and delivery or pickup details. Thank you!'),
     ].join('\n');
 
     return `https://wa.me/${STORE_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
@@ -96,13 +100,15 @@ export class App {
   addToCart(productId: string): void {
     const added = this.store.addToCart(productId);
     this.showToast(
-      added ? 'Added to your basket' : 'Sorry, this item is out of stock',
+      added
+        ? this.language.text('Added to your basket')
+        : this.language.text('Sorry, this item is out of stock'),
     );
   }
 
   changeQuantity(productId: string, quantity: number): void {
     if (!this.store.updateCartQuantity(productId, quantity)) {
-      this.showToast('That quantity is not available in stock');
+      this.showToast(this.language.text('That quantity is not available in stock'));
     }
   }
 

@@ -4,6 +4,7 @@ import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angu
 import { toSignal } from '@angular/core/rxjs-interop';
 import { PRODUCT_ICON_GROUPS } from '../../data/product-icons';
 import { GroceryStoreService } from '../../services/grocery-store.service';
+import { LanguageService } from '../../services/language.service';
 
 @Component({
   selector: 'app-inventory-panel',
@@ -13,6 +14,7 @@ import { GroceryStoreService } from '../../services/grocery-store.service';
 export class InventoryPanelComponent {
   private readonly formBuilder = inject(FormBuilder);
   readonly store = inject(GroceryStoreService);
+  readonly language = inject(LanguageService);
   readonly categories = this.store.activeCategories;
   readonly iconGroups = PRODUCT_ICON_GROUPS;
   readonly iconSearchControl = new FormControl('', { nonNullable: true });
@@ -22,15 +24,32 @@ export class InventoryPanelComponent {
   readonly filteredIconGroups = computed(() => {
     const query = this.iconSearch().trim().toLocaleLowerCase();
     if (!query) {
-      return this.iconGroups;
+      return this.iconGroups.map((group) => ({
+        ...group,
+        displayName: this.language.text(group.name),
+        icons: group.icons.map((option) => ({
+          ...option,
+          displayLabel: this.language.text(option.label),
+          searchTerms: this.language
+            .text(option.label)
+            .toLocaleLowerCase(),
+        })),
+      }));
     }
 
     return this.iconGroups
       .map((group) => ({
         ...group,
-        icons: group.icons.filter((option) =>
-          option.label.toLocaleLowerCase().includes(query),
-        ),
+        displayName: this.language.text(group.name),
+        icons: group.icons
+          .map((option) => ({
+            ...option,
+            displayLabel: this.language.text(option.label),
+            searchTerms: `${option.label} ${this.language
+              .text(option.label)
+              .toLocaleLowerCase()}`.toLocaleLowerCase(),
+          }))
+          .filter((option) => option.searchTerms.includes(query)),
       }))
       .filter((group) => group.icons.length > 0);
   });

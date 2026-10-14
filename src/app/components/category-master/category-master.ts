@@ -4,6 +4,7 @@ import {
   CategoryMutationResult,
   GroceryStoreService,
 } from '../../services/grocery-store.service';
+import { LanguageService } from '../../services/language.service';
 
 @Component({
   selector: 'app-category-master',
@@ -13,6 +14,7 @@ import {
 export class CategoryMasterComponent {
   private readonly formBuilder = inject(FormBuilder);
   readonly store = inject(GroceryStoreService);
+  readonly language = inject(LanguageService);
   readonly activeCategories = computed(() =>
     this.store.categories().filter((category) => category.active),
   );

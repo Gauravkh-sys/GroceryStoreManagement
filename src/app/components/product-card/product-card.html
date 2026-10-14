@@ -8,37 +8,37 @@
       [class]="product().stock <= 5 ? 'bg-rose-100 text-rose-700' : product().stock <= 12 ? 'bg-amber-100 text-amber-700' : 'bg-white/90 text-[#617054]'"
     >
       @if (product().stock === 0) {
-        Out of stock
+        {{ language.text('Out of stock') }}
       } @else if (product().stock <= 5) {
-        Low stock
+        {{ language.text('Low stock') }}
       } @else {
-        In stock
+        {{ language.text('In stock') }}
       }
     </span>
-    <span class="absolute bottom-2.5 right-2.5 rounded-full bg-white/80 px-2 py-1 text-[10px] font-semibold text-stone-500">{{ product().stock }} left</span>
+    <span class="absolute bottom-2.5 right-2.5 rounded-full bg-white/80 px-2 py-1 text-[10px] font-semibold text-stone-500">{{ product().stock }} {{ language.text('left') }}</span>
   </div>
 
   <div class="flex flex-1 flex-col pt-3.5">
     <p class="text-[10px] font-bold uppercase tracking-[0.12em] text-[#849175]" [class.line-through]="!categoryIsActive()">
-      {{ product().category }}
+      {{ language.category(product().category) }}
       @if (!categoryIsActive()) {
-        <span class="sr-only">, archived category</span>
+        <span class="sr-only">, {{ language.text('Archived category') }}</span>
       }
     </p>
-    <h3 class="mt-1.5 min-h-11 text-sm font-semibold leading-5 text-[#283322] sm:text-[15px]">{{ product().name }}</h3>
-    <p class="mt-1 text-xs text-stone-400">per {{ product().unit }}</p>
+    <h3 class="mt-1.5 min-h-11 text-sm font-semibold leading-5 text-[#283322] sm:text-[15px]">{{ language.product(product()) }}</h3>
+    <p class="mt-1 text-xs text-stone-400">{{ language.text('per') }} {{ language.unit(product().unit) }}</p>
     <div class="mt-auto flex items-center justify-between gap-2 pt-4">
-      <span class="text-lg font-bold tracking-tight text-[#263423]">{{ product().price | currency:'INR':'symbol':'1.2-2':'en-IN' }}</span>
+      <span class="text-lg font-bold tracking-tight text-[#263423]">{{ product().price | currency:'INR':'symbol':'1.2-2':language.locale() }}</span>
       <button
         type="button"
         class="add-button inline-flex h-9 items-center justify-center gap-1.5 rounded-full bg-[#31723b] px-3 text-xs font-semibold text-white transition hover:bg-[#245e2e] focus:outline-none focus:ring-2 focus:ring-[#31723b] focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-stone-200 disabled:text-stone-400"
         [disabled]="product().stock === 0 || !categoryIsActive()"
-        [attr.aria-label]="'Add ' + product().name + ' to cart'"
-        [attr.title]="categoryIsActive() ? null : 'This product’s category is archived.'"
+        [attr.aria-label]="language.text('Add {name} to cart', { name: language.product(product()) })"
+        [attr.title]="categoryIsActive() ? null : language.text('This product’s category is archived.')"
         (click)="add.emit(product().id)"
       >
         <span aria-hidden="true" class="text-base leading-none">+</span>
-        <span>Add</span>
+        <span>{{ language.text('Add') }}</span>
       </button>
     </div>
   </div>

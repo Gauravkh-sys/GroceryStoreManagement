@@ -37,6 +37,7 @@ command and `dist/GroceryStoreManagement/browser` as the publish directory.
 - Prepare an itemized order with totals in WhatsApp to the configured store number in `src/app/config/store-contact.ts`. Review and send the message in WhatsApp; the app keeps the basket and does not claim the order is confirmed.
 - Switch to Inventory to add products with a validated reactive form or remove products.
 - Choose product icons from a searchable, grouped emoji library for groceries, grains, snacks, cleaning supplies, personal care, and farm essentials, or enter a custom emoji.
+- Switch the interface between English and Hindi. Built-in products and categories and the generated WhatsApp order message follow the selected language; custom names remain as entered.
 - Manage categories by adding and renaming them, or archiving and restoring them. Archived categories disappear from shop filters and product forms; products already assigned to them remain visible but cannot be added to the basket until the category is restored.
 - Product inventory, categories, and basket changes are held in the in-memory mock store and reset on refresh.
 
