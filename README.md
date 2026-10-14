@@ -34,17 +34,19 @@ command and `dist/GroceryStoreManagement/browser` as the publish directory.
 
 - Search products by name and filter the catalog by category.
 - Add products to the basket, adjust quantities, remove items, and see the subtotal, 8% tax, and total update immediately.
-- Complete checkout to decrement inventory and clear the basket.
+- Prepare an itemized order with totals in WhatsApp to the configured store number in `src/app/config/store-contact.ts`. Review and send the message in WhatsApp; the app keeps the basket and does not claim the order is confirmed.
 - Switch to Inventory to add products with a validated reactive form or remove products.
 - Choose product icons from a searchable, grouped emoji library for groceries, grains, snacks, cleaning supplies, personal care, and farm essentials, or enter a custom emoji.
 - Manage categories by adding and renaming them, or archiving and restoring them. Archived categories disappear from shop filters and product forms; products already assigned to them remain visible but cannot be added to the basket until the category is restored.
-- Product inventory, categories, basket, and checkout changes are held in the in-memory mock store and reset on refresh.
+- Product inventory, categories, and basket changes are held in the in-memory mock store and reset on refresh.
 
 ## Project structure
 
 ```text
 src/
   app/
+    config/
+      store-contact.ts     # WhatsApp order recipient
     components/
       category-master/      # Category creation, renaming, archiving, and restore
       inventory-panel/       # Reactive product form and stock table

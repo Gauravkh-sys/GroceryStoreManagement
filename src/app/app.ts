@@ -5,6 +5,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { InventoryPanelComponent } from './components/inventory-panel/inventory-panel';
 import { CategoryMasterComponent } from './components/category-master/category-master';
 import { ProductCardComponent } from './components/product-card/product-card';
+import { STORE_WHATSAPP_NUMBER } from './config/store-contact';
 import { GroceryStoreService } from './services/grocery-store.service';
 import { ThemeService } from './services/theme.service';
 
@@ -45,6 +46,32 @@ export class App {
       return matchesCategory && matchesSearch;
     });
   });
+  readonly whatsappOrderUrl = computed(() => {
+    const items = this.store.cartItems();
+    const formatPrice = (amount: number) =>
+      new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        maximumFractionDigits: 2,
+      }).format(amount);
+    const itemLines = items.map(
+      (item) =>
+        `- ${item.product.name} (${item.product.category}) x ${item.quantity} ${item.product.unit}${item.quantity === 1 ? '' : 's'} @ ${formatPrice(item.product.price)} = ${formatPrice(item.lineTotal)}`,
+    );
+    const message = [
+      'Hello Freshly Market! I would like to place this order:',
+      '',
+      ...itemLines,
+      '',
+      `Subtotal: ${formatPrice(this.store.subtotal())}`,
+      `Tax (8%): ${formatPrice(this.store.tax())}`,
+      `Total: ${formatPrice(this.store.total())}`,
+      '',
+      'Please confirm availability and delivery or pickup details. Thank you!',
+    ].join('\n');
+
+    return `https://wa.me/${STORE_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+  });
   readonly inventoryCount = computed(() =>
     this.store.products().reduce((count, product) => count + product.stock, 0),
   );
@@ -77,16 +104,6 @@ export class App {
     if (!this.store.updateCartQuantity(productId, quantity)) {
       this.showToast('That quantity is not available in stock');
     }
-  }
-
-  checkout(): void {
-    if (!this.store.checkout()) {
-      this.showToast('Your basket could not be checked out. Please try again.');
-      return;
-    }
-
-    this.isCartOpen.set(false);
-    this.showToast('Order placed! Thanks for shopping fresh.');
   }
 
   private showToast(message: string): void {

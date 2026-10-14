@@ -209,36 +209,6 @@ export class GroceryStoreService {
     );
   }
 
-  checkout(): boolean {
-    const items = this.cartState();
-    if (items.length === 0) {
-      return false;
-    }
-
-    const products = this.productState();
-    const canFulfill = items.every((item) => {
-      const product = products.find(
-        (candidate) => candidate.id === item.productId,
-      );
-      return product !== undefined && product.stock >= item.quantity;
-    });
-    if (!canFulfill) {
-      return false;
-    }
-
-    const purchasedQuantities = new Map(
-      items.map((item) => [item.productId, item.quantity]),
-    );
-    this.productState.set(
-      products.map((product) => ({
-        ...product,
-        stock: product.stock - (purchasedQuantities.get(product.id) ?? 0),
-      })),
-    );
-    this.cartState.set([]);
-    return true;
-  }
-
   addProduct(product: Omit<Product, 'id'>): boolean {
     if (!this.isCategoryActive(product.category)) {
       return false;
