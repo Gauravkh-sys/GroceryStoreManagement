@@ -1,13 +1,14 @@
 @if (isLoginScreen()) {
   <app-login-screen (browseStore)="isLoginScreen.set(false)" />
-} @else {
+} 
+@else {
 <div class="min-h-screen bg-[#fafbf8] text-[#293526]" [attr.lang]="language.current()">
   <header class="sticky top-0 z-30 border-b border-[#edf0e8] bg-white/95 backdrop-blur">
     <div class="mx-auto flex h-[72px] max-w-[1440px] items-center justify-between gap-4 px-4 sm:px-7 lg:px-10">
-      <button type="button" class="flex shrink-0 items-center gap-2.5 rounded-lg text-left focus:outline-none focus:ring-2 focus:ring-[#31723b]" [attr.aria-label]="language.text('Freshly home')" (click)="activeView.set('shop')">
+      <button type="button" class="flex shrink-0 items-center gap-2.5 rounded-lg text-left focus:outline-none focus:ring-2 focus:ring-[#31723b]" [attr.aria-label]="language.text('Durvijay General Store home')" (click)="activeView.set('shop')">
         <span class="flex h-10 w-10 items-center justify-center rounded-[14px] bg-[#31723b] text-xl text-white shadow-sm" aria-hidden="true">✿</span>
         <span>
-          <span class="block text-[17px] font-bold leading-5 tracking-tight text-[#243421]">freshly<span class="text-[#62a34d]">.</span></span>
+          <span class="block text-[15px] font-bold leading-5 tracking-tight text-[#243421] sm:text-[17px]">{{ language.text('Durvijay General Store') }}</span>
           <span class="block text-[9px] font-semibold uppercase tracking-[0.17em] text-[#8a9681]">{{ language.text('good food, good mood') }}</span>
         </span>
       </button>
@@ -135,7 +136,7 @@
 
   <footer class="border-t border-[#edf0e8] bg-white">
     <div class="mx-auto flex max-w-[1440px] flex-col items-center justify-between gap-2 px-4 py-5 text-xs text-stone-400 sm:flex-row sm:px-7 lg:px-10">
-      <p>{{ language.text('© 2026, Gaurav Mishra -A freshly market.') }} {{ language.text('Made for good days.') }}</p>
+      <p>{{ language.text('© 2026, Gaurav Mishra — Durvijay General Store') }} {{ language.text('Made for good days.') }}</p>
       <p>{{ language.text('Fresh choices, right around the corner') }} <span class="text-[#72a85c]" aria-hidden="true">✿</span></p>
     </div>
   </footer>
@@ -218,3 +219,4 @@
     </div>
   }
 </div>
+}
