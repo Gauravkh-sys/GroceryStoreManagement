@@ -19,6 +19,17 @@ Create an optimized production build with:
 npm run build
 ```
 
+## Deploy to Netlify
+
+The included `netlify.toml` configures Netlify to use Node.js 22.22.2, run
+`npm run build`, and publish Angular's browser output from
+`dist/GroceryStoreManagement/browser`. It also rewrites client-side routes to
+`index.html`, so refreshing or opening a deep link does not return a 404.
+
+Connect the repository to Netlify and deploy with the default settings from
+`netlify.toml`. If entering settings manually, use `npm run build` as the build
+command and `dist/GroceryStoreManagement/browser` as the publish directory.
+
 ## Features
 
 - Search products by name and filter the catalog by category.
