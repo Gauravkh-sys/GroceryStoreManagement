@@ -29,7 +29,7 @@ export class LoginScreenComponent {
   readonly language = inject(LanguageService);
   readonly theme = inject(ThemeService);
   readonly browseStore = output<void>();
-  readonly signedIn = output<LoginRole>();
+  readonly signedIn = output<{ role: LoginRole; mobile: string }>();
   readonly role = signal<LoginRole>('customer');
   readonly demoMobile = computed(() => DEMO_ACCOUNTS[this.role()].mobile);
   readonly statusMessage = signal('');
@@ -71,6 +71,6 @@ export class LoginScreenComponent {
     }
 
     this.statusMessage.set('Demo sign-in successful.');
-    this.signedIn.emit(this.role());
+    this.signedIn.emit({ role: this.role(), mobile: account.mobile });
   }
 }

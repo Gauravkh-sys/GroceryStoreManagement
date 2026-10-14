@@ -1,0 +1,45 @@
+<section class="space-y-6" aria-labelledby="unit-master-title">
+  <header>
+    <p class="text-xs font-bold uppercase tracking-[0.16em] text-[#718368]">{{ language.text('Store manager') }}</p>
+    <h1 id="unit-master-title" class="mt-1 text-2xl font-bold tracking-tight text-[#263423] sm:text-3xl">{{ language.text('Unit master') }}</h1>
+    <p class="mt-1 text-sm text-stone-500">{{ language.text('Manage units available when creating and updating products.') }}</p>
+  </header>
+
+  @if (errorMessage) {
+    <p class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700" role="alert">{{ language.text(errorMessage) }}</p>
+  }
+  @if (message) {
+    <p class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800" role="status">{{ language.text(message) }}</p>
+  }
+
+  <div class="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_330px]">
+    <section class="overflow-hidden rounded-2xl border border-stone-100 bg-white shadow-sm" aria-labelledby="units-list-title">
+      <div class="flex items-center justify-between gap-3 border-b border-stone-100 px-4 py-4 sm:px-5">
+        <h2 id="units-list-title" class="font-semibold text-[#293526]">{{ language.text('Product units') }}</h2>
+        <span class="rounded-full bg-[#f0f5eb] px-3 py-1 text-xs font-semibold text-[#4c6845]">{{ store.units().length }}</span>
+      </div>
+      <ul class="divide-y divide-stone-100">
+        @for (unit of unitUsage(); track unit.name) {
+          <li class="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5 sm:px-5">
+            <div class="min-w-0">
+              <p class="font-medium text-[#33402f]">{{ language.unit(unit.name) }}</p>
+              <p class="mt-0.5 text-xs text-stone-400">{{ unit.products }} {{ language.text('products use this unit') }}</p>
+            </div>
+            <button type="button" class="shrink-0 rounded-lg border border-stone-200 px-3 py-2 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40" [disabled]="unit.products > 0 || ['item','kg','g','litre','pack','bunch','dozen','bag','bottle'].includes(unit.name)" [attr.aria-label]="language.text('Remove unit {name}', { name: language.unit(unit.name) })" (click)="removeUnit(unit.name)">{{ language.text('Remove') }}</button>
+          </li>
+        }
+      </ul>
+    </section>
+
+    <aside class="h-fit rounded-2xl border border-stone-100 bg-white p-5 shadow-sm">
+      <h2 class="font-semibold text-[#293526]">{{ language.text('Add a unit') }}</h2>
+      <p class="mt-1 text-xs leading-5 text-stone-400">{{ language.text('Examples: carton, tray, or jar. Units already used by products cannot be removed.') }}</p>
+      <form class="mt-4 space-y-3" (submit)="addUnit(); $event.preventDefault()">
+        <label for="new-unit" class="block text-xs font-semibold text-stone-600">{{ language.text('Unit name') }}</label>
+        <input id="new-unit" class="form-field" [formControl]="unitControl" maxlength="24" [placeholder]="language.text('e.g. carton')" />
+        <button class="w-full rounded-xl bg-[#31723b] py-3 text-sm font-semibold text-white" type="submit">{{ language.text('Add unit') }}</button>
+      </form>
+      <p class="mt-4 text-xs leading-5 text-amber-800">{{ language.text('Demo data is stored only in this browser.') }}</p>
+    </aside>
+  </div>
+</section>

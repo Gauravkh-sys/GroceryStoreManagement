@@ -1,0 +1,78 @@
+<section class="space-y-6" aria-labelledby="sales-dashboard-title">
+  <header class="flex flex-wrap items-end justify-between gap-3">
+    <div>
+      <p class="text-xs font-bold uppercase tracking-[0.16em] text-[#718368]">{{ language.text('Store manager') }}</p>
+      <h1 id="sales-dashboard-title" class="mt-1 text-2xl font-bold tracking-tight text-[#263423] sm:text-3xl">{{ language.text('Sales dashboard') }}</h1>
+      <p class="mt-1 text-sm text-stone-500">{{ language.text('A quick view of completed sales and orders.') }}</p>
+    </div>
+    <p class="rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900">{{ language.text('Demo data stored in this browser') }}</p>
+  </header>
+
+  <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <article class="rounded-2xl border border-[#dce6d5] bg-white p-4 shadow-sm sm:p-5">
+      <p class="text-xs font-semibold text-stone-500">{{ language.text('Sales today') }}</p>
+      <p class="mt-2 text-2xl font-bold text-[#2d5732]">{{ todayRevenue() | currency:'INR':'symbol':'1.2-2':language.locale() }}</p>
+      <p class="mt-1 text-xs text-stone-400">{{ todayOrders().length }} {{ language.text('orders today') }}</p>
+    </article>
+    <article class="rounded-2xl border border-[#dce6d5] bg-white p-4 shadow-sm sm:p-5">
+      <p class="text-xs font-semibold text-stone-500">{{ language.text('Completed sales') }}</p>
+      <p class="mt-2 text-2xl font-bold text-[#2d5732]">{{ completedRevenue() | currency:'INR':'symbol':'1.2-2':language.locale() }}</p>
+      <p class="mt-1 text-xs text-stone-400">{{ completedOrders().length }} {{ language.text('completed orders') }}</p>
+    </article>
+    <article class="rounded-2xl border border-[#dce6d5] bg-white p-4 shadow-sm sm:p-5">
+      <p class="text-xs font-semibold text-stone-500">{{ language.text('Pending orders') }}</p>
+      <p class="mt-2 text-2xl font-bold text-amber-800">{{ pendingOrders() }}</p>
+      <p class="mt-1 text-xs text-stone-400">{{ language.text('Awaiting manager action') }}</p>
+    </article>
+    <article class="rounded-2xl border border-[#dce6d5] bg-white p-4 shadow-sm sm:p-5">
+      <p class="text-xs font-semibold text-stone-500">{{ language.text('Products in store') }}</p>
+      <p class="mt-2 text-2xl font-bold text-[#2d5732]">{{ store.products().length }}</p>
+      <p class="mt-1 text-xs text-stone-400">{{ language.text('Across active and archived categories') }}</p>
+    </article>
+  </div>
+
+  <div class="grid gap-5 xl:grid-cols-2">
+    <section class="rounded-2xl border border-stone-100 bg-white p-4 shadow-sm sm:p-5" aria-labelledby="top-selling-title">
+      <h2 id="top-selling-title" class="font-semibold text-[#293526]">{{ language.text('Top selling products') }}</h2>
+      <p class="mt-1 text-xs text-stone-400">{{ language.text('Based on completed demo orders.') }}</p>
+      <ol class="mt-4 space-y-4">
+        @for (item of topProducts(); track item.name) {
+          <li>
+            <div class="mb-1.5 flex items-center justify-between gap-3 text-sm">
+              <span class="min-w-0 break-words font-medium text-[#33402f]">{{ language.text(item.name) }}</span>
+              <span class="shrink-0 text-xs text-stone-500">{{ item.quantity }} {{ language.text('sold') }}</span>
+            </div>
+            <div class="h-2 overflow-hidden rounded-full bg-[#edf3e7]">
+              <div class="h-full rounded-full bg-[#68a052]" [style.width.%]="item.quantity / (topProducts()[0].quantity || 1) * 100"></div>
+            </div>
+          </li>
+        } @empty {
+          <li class="rounded-xl bg-[#f7f9f4] px-4 py-8 text-center text-sm text-stone-500">{{ language.text('Complete an order to see product sales here.') }}</li>
+        }
+      </ol>
+    </section>
+
+    <section class="rounded-2xl border border-stone-100 bg-white p-4 shadow-sm sm:p-5" aria-labelledby="recent-orders-title">
+      <div class="flex items-center justify-between gap-3">
+        <div>
+          <h2 id="recent-orders-title" class="font-semibold text-[#293526]">{{ language.text('Recent orders') }}</h2>
+          <p class="mt-1 text-xs text-stone-400">{{ language.text('Latest activity from this browser.') }}</p>
+        </div>
+        <span class="rounded-full bg-[#f0f5eb] px-3 py-1 text-xs font-semibold text-[#4c6845]">{{ store.orders().length }}</span>
+      </div>
+      <ul class="mt-3 divide-y divide-stone-100">
+        @for (order of store.orders().slice(0, 5); track order.id) {
+          <li class="flex flex-wrap items-center justify-between gap-2 py-3">
+            <div class="min-w-0">
+              <p class="break-all text-sm font-semibold text-[#33402f]">{{ order.id }}</p>
+              <p class="text-xs text-stone-500">{{ order.customerName }} · {{ order.items.length }} {{ language.text('items') }}</p>
+            </div>
+            <span class="text-sm font-bold text-[#2d5732]">{{ order.total | currency:'INR':'symbol':'1.2-2':language.locale() }}</span>
+          </li>
+        } @empty {
+          <li class="py-8 text-center text-sm text-stone-500">{{ language.text('No orders yet.') }}</li>
+        }
+      </ul>
+    </section>
+  </div>
+</section>

@@ -34,12 +34,15 @@ command and `dist/GroceryStoreManagement/browser` as the publish directory.
 
 - Search products by name and filter the catalog by category.
 - Add products to the basket, adjust quantities, remove items, and see the subtotal, 8% tax, and total update immediately.
-- Prepare an itemized order with totals in WhatsApp to the configured store number in `src/app/config/store-contact.ts`. Review and send the message in WhatsApp; the app keeps the basket and does not claim the order is confirmed.
-- Switch to Inventory to add products with a validated reactive form or remove products.
+- Place demo orders, track pending/completed/cancelled status, and print or save an itemized bill through the browser's PDF print dialog.
+- Submit product requests for the manager to review.
+- Use the manager dashboard for demo sales and orders; manage inventory, products, categories, and units.
+- All orders, requests, inventory, categories, units, and basket data are stored in browser local storage for this demo. There is no backend synchronization, payment collection, or secure authentication.
+- Prepare an optional itemized order message for WhatsApp to the configured store number in `src/app/config/store-contact.ts`.
 - Choose product icons from a searchable, grouped emoji library for groceries, grains, snacks, cleaning supplies, personal care, and farm essentials, or enter a custom emoji.
 - Switch the interface between English and Hindi. Built-in products and categories and the generated WhatsApp order message follow the selected language; custom names remain as entered.
 - Manage categories by adding and renaming them, or archiving and restoring them. Archived categories disappear from shop filters and product forms; products already assigned to them remain visible but cannot be added to the basket until the category is restored.
-- Product inventory, categories, and basket changes are held in the in-memory mock store and reset on refresh.
+- Browser storage is local to the current browser/device. Clearing site storage removes demo records. Do not enter real customer or payment data.
 
 ## Project structure
 
@@ -51,13 +54,17 @@ src/
     components/
       category-master/      # Category creation, renaming, archiving, and restore
       inventory-panel/       # Reactive product form and stock table
+      order-management/      # Demo order and product-request management
+      product-request/       # Customer product suggestions
       product-card/          # Reusable catalog card
+      sales-dashboard/       # Demo sales totals and best sellers
+      unit-master/           # Product unit management
     data/
       grocery-data.ts        # Initial grocery catalog
     models/
       grocery.model.ts       # Product, category, and cart types
     services/
-      grocery-store.service.ts # Signal-backed inventory and basket state
+      grocery-store.service.ts # Signal-backed demo store state and local persistence
     app.html                 # Storefront, navigation, and cart drawer
     app.ts                   # Page state, search, and checkout orchestration
   styles.css                 # Tailwind import and shared design styles

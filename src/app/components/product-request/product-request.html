@@ -1,0 +1,32 @@
+<section class="rounded-3xl border border-[#dce6d5] bg-white p-5 shadow-sm sm:p-7" aria-labelledby="product-request-title">
+  <div class="grid gap-6 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:items-start">
+    <div>
+      <p class="text-xs font-bold uppercase tracking-[0.16em] text-[#718368]">{{ language.text('Customer request') }}</p>
+      <h2 id="product-request-title" class="mt-1 text-xl font-bold tracking-tight text-[#263423] sm:text-2xl">{{ language.text('Can’t find a product?') }}</h2>
+      <p class="mt-2 text-sm leading-6 text-stone-500">{{ language.text('Tell us what you would like us to stock. The store manager can review your request.') }}</p>
+      <p class="mt-3 text-xs leading-5 text-amber-800">{{ language.text('Demo only: requests are saved in this browser and are not sent to a live store.') }}</p>
+    </div>
+    <form class="grid min-w-0 gap-3 sm:grid-cols-2" [formGroup]="requestForm" (ngSubmit)="submitRequest()">
+      <label class="block min-w-0 text-xs font-semibold text-stone-600 sm:col-span-2">
+        {{ language.text('Product you want') }}
+        <input class="form-field mt-1.5" formControlName="productName" maxlength="60" [placeholder]="language.text('Product name')" />
+      </label>
+      <label class="block min-w-0 text-xs font-semibold text-stone-600 sm:col-span-2">
+        {{ language.text('Details (optional)') }}
+        <textarea class="form-field mt-1.5 min-h-20 resize-y" formControlName="details" maxlength="240" [placeholder]="language.text('Brand, size, or other details')"></textarea>
+      </label>
+      <label class="block min-w-0 text-xs font-semibold text-stone-600">
+        {{ language.text('Your name') }}
+        <input class="form-field mt-1.5" formControlName="customerName" maxlength="60" autocomplete="name" />
+      </label>
+      <label class="block min-w-0 text-xs font-semibold text-stone-600">
+        {{ language.text('Mobile number') }}
+        <input class="form-field mt-1.5" type="tel" inputmode="numeric" formControlName="customerMobile" maxlength="10" autocomplete="tel" />
+      </label>
+      <button class="w-full rounded-xl bg-[#31723b] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#245e2e] focus:outline-none focus:ring-2 focus:ring-[#31723b] focus:ring-offset-2 sm:col-span-2" type="submit">{{ language.text('Send product request') }}</button>
+      @if (message()) {
+        <p class="text-sm leading-5 text-[#2d5732] sm:col-span-2" role="status">{{ language.text(message()) }}</p>
+      }
+    </form>
+  </div>
+</section>

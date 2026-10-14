@@ -524,3 +524,35 @@ html[data-theme="dark"] .login-glass [class~="text-[#697461]"] {
     transition-duration: 0.01ms !important;
   }
 }
+
+@media print {
+  @page {
+    margin: 14mm;
+    size: A4;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  #bill-document,
+  #bill-document * {
+    visibility: visible !important;
+  }
+
+  #bill-document {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}
