@@ -5,7 +5,10 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { InventoryPanelComponent } from './components/inventory-panel/inventory-panel';
 import { CategoryMasterComponent } from './components/category-master/category-master';
 import { ProductCardComponent } from './components/product-card/product-card';
-import { LoginScreenComponent } from './components/login-screen/login-screen';
+import {
+  LoginScreenComponent,
+  type LoginRole,
+} from './components/login-screen/login-screen';
 import { STORE_WHATSAPP_NUMBER } from './config/store-contact';
 import { GroceryStoreService } from './services/grocery-store.service';
 import { LanguageService } from './services/language.service';
@@ -98,6 +101,11 @@ export class App {
 
   selectCategory(category: string): void {
     this.selectedCategory.set(category);
+  }
+
+  completeDemoLogin(role: LoginRole): void {
+    this.activeView.set(role === 'manager' ? 'inventory' : 'shop');
+    this.isLoginScreen.set(false);
   }
 
   addToCart(productId: string): void {

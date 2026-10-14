@@ -262,9 +262,9 @@ button:disabled {
 
 .login-scene {
   background:
-    radial-gradient(ellipse at 12% 10%, rgb(216 232 201 / 78%), transparent 38%),
-    radial-gradient(ellipse at 91% 93%, rgb(228 238 215 / 90%), transparent 40%),
-    #f6f8f2;
+    radial-gradient(ellipse at 10% 12%, rgb(225 238 207 / 92%), transparent 37%),
+    radial-gradient(ellipse at 93% 88%, rgb(218 234 205 / 86%), transparent 38%),
+    linear-gradient(135deg, #f9fbf5 0%, #f0f5e9 50%, #f8faf4 100%);
 }
 
 .login-glow-one {
@@ -278,17 +278,17 @@ button:disabled {
 }
 
 .login-glass {
-  border: 1px solid rgb(255 255 255 / 75%);
-  background: rgb(255 255 255 / 52%);
-  box-shadow: 0 32px 100px rgb(52 77 43 / 14%);
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgb(255 255 255 / 92%);
+  background: rgb(255 255 255 / 76%);
+  box-shadow: 0 30px 85px rgb(52 77 43 / 17%), 0 2px 10px rgb(52 77 43 / 6%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
 }
 
 .login-story {
   background:
-    radial-gradient(ellipse at 80% 8%, rgb(255 255 255 / 74%), transparent 40%),
-    linear-gradient(145deg, rgb(242 247 235 / 90%), rgb(228 238 216 / 76%));
+    radial-gradient(ellipse at 82% 8%, rgb(255 255 255 / 92%), transparent 42%),
+    linear-gradient(145deg, #f3f8ec 0%, #e6f0db 100%);
 }
 
 .login-illustration span {
@@ -296,7 +296,7 @@ button:disabled {
 }
 
 .login-form-panel {
-  background: rgb(255 255 255 / 35%);
+  background: rgb(255 255 255 / 50%);
 }
 
 .login-utility-button {
@@ -353,9 +353,21 @@ button:disabled {
 }
 
 .login-notice {
-  border: 1px solid #eadcb4;
-  background: rgb(255 249 230 / 78%);
-  color: #725b25;
+  border: 1px solid #e7d9ad;
+  background: linear-gradient(115deg, #fff9e8, #fffdf5);
+  color: #675323;
+}
+
+.product-card {
+  border: 1px solid #dce6d5;
+  border-radius: 24px;
+  background: linear-gradient(155deg, #fff 0%, #fbfdf8 100%);
+  box-shadow: 0 4px 14px rgb(47 72 39 / 6%);
+}
+
+.product-card:hover {
+  border-color: #b8cdaa;
+  box-shadow: 0 16px 32px rgb(47 72 39 / 12%);
 }
 
 html[data-theme="dark"] .login-scene {
@@ -377,6 +389,17 @@ html[data-theme="dark"] .login-glass {
   border-color: rgb(117 143 108 / 25%);
   background: rgb(28 38 29 / 76%);
   box-shadow: 0 32px 100px rgb(0 0 0 / 32%);
+}
+
+html[data-theme="dark"] .product-card {
+  border-color: #354236;
+  background: #1c261d;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 15%);
+}
+
+html[data-theme="dark"] .product-card:hover {
+  border-color: #50654c;
+  box-shadow: 0 16px 32px rgb(0 0 0 / 28%);
 }
 
 html[data-theme="dark"] .login-story {

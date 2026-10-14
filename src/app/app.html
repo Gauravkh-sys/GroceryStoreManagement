@@ -1,5 +1,8 @@
 @if (isLoginScreen()) {
-  <app-login-screen (browseStore)="isLoginScreen.set(false)" />
+  <app-login-screen
+    (browseStore)="isLoginScreen.set(false)"
+    (signedIn)="completeDemoLogin($event)"
+  />
 } 
 @else {
 <div class="min-h-screen bg-[#fafbf8] text-[#293526]" [attr.lang]="language.current()">

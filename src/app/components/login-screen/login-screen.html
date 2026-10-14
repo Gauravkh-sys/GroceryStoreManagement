@@ -86,24 +86,27 @@
           ><span aria-hidden="true">🏪</span>{{ language.text('Store manager') }}</button>
         </div>
 
-        <form class="mt-6 space-y-4" (ngSubmit)="attemptSignIn()" [attr.aria-label]="language.text('Sign in form')" novalidate>
+        <form class="mt-6 space-y-4" (submit)="attemptSignIn(); $event.preventDefault()" [attr.aria-label]="language.text('Sign in form')" novalidate>
           <div>
-            <label for="login-identifier" class="mb-1.5 block text-sm font-semibold text-[#394735]">{{ language.text(role() === 'manager' ? 'Email address' : 'Email or phone number') }}</label>
+            <label for="login-identifier" class="mb-1.5 block text-sm font-semibold text-[#394735]">{{ language.text('Mobile number') }}</label>
             <input
               id="login-identifier"
               class="login-input"
-              type="text"
+              type="tel"
+              inputmode="numeric"
               [formControl]="loginIdentifier"
-              [attr.autocomplete]="role() === 'manager' ? 'username' : 'username'"
-              [placeholder]="language.text(role() === 'manager' ? 'Enter your email address' : 'Enter your email or phone number')"
+              autocomplete="username"
+              maxlength="10"
+              pattern="[0-9]{10}"
+              [placeholder]="language.text('Enter your 10-digit mobile number')"
               [attr.aria-invalid]="loginIdentifier.touched && loginIdentifier.invalid"
               [attr.aria-describedby]="loginIdentifier.touched && loginIdentifier.invalid ? 'login-identifier-error' : null"
               required
             >
             @if (loginIdentifier.touched && loginIdentifier.hasError('required')) {
               <p id="login-identifier-error" class="mt-1.5 text-xs text-rose-700" role="alert">{{ language.text('This field is required.') }}</p>
-            } @else if (loginIdentifier.touched && loginIdentifier.hasError('email')) {
-              <p id="login-identifier-error" class="mt-1.5 text-xs text-rose-700" role="alert">{{ language.text('Enter a valid email address.') }}</p>
+            } @else if (loginIdentifier.touched && loginIdentifier.hasError('pattern')) {
+              <p id="login-identifier-error" class="mt-1.5 text-xs text-rose-700" role="alert">{{ language.text('Enter a valid 10-digit mobile number.') }}</p>
             }
           </div>
           <div>
@@ -112,18 +115,20 @@
               id="login-password"
               class="login-input"
               type="password"
+              inputmode="numeric"
               [formControl]="password"
               autocomplete="current-password"
+              maxlength="10"
               [placeholder]="language.text('Enter your password')"
               [attr.aria-invalid]="password.touched && password.invalid"
               [attr.aria-describedby]="password.touched && password.invalid ? 'login-password-error' : null"
-              minlength="8"
+              pattern="[0-9]{10}"
               required
             >
             @if (password.touched && password.hasError('required')) {
               <p id="login-password-error" class="mt-1.5 text-xs text-rose-700" role="alert">{{ language.text('This field is required.') }}</p>
-            } @else if (password.touched && password.hasError('minlength')) {
-              <p id="login-password-error" class="mt-1.5 text-xs text-rose-700" role="alert">{{ language.text('Password must be at least 8 characters.') }}</p>
+            } @else if (password.touched && password.hasError('pattern')) {
+              <p id="login-password-error" class="mt-1.5 text-xs text-rose-700" role="alert">{{ language.text('Password must be the 10-digit mobile number.') }}</p>
             }
           </div>
 
@@ -136,7 +141,8 @@
           </button>
         </form>
 
-        <p class="login-notice mt-5 rounded-xl px-3.5 py-3 text-xs leading-5">{{ language.text('Authentication is not configured yet. Sign-in will be enabled once a secure service is connected.') }}</p>
+        <p class="login-notice mt-5 rounded-xl px-3.5 py-3 text-xs leading-5">{{ language.text('Demo login only: these credentials are stored in the app and are not secure for production.') }}</p>
+        <p class="mt-3 text-center text-xs leading-5 text-[#65705d]">{{ language.text('Demo credentials: {mobile} (password is the same number)', { mobile: demoMobile() }) }}</p>
         <div class="mt-5 text-center">
           <button type="button" class="rounded-md text-sm font-semibold text-[#397343] underline-offset-4 hover:underline focus:outline-none focus:ring-2 focus:ring-[#31723b]" (click)="browseStore.emit()">{{ language.text('Browse the store without signing in') }}</button>
           <p class="mt-3 text-xs text-[#899284]">{{ language.text('No registration is available yet.') }}</p>
