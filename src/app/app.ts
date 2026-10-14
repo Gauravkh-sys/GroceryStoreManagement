@@ -17,7 +17,7 @@ import { ProductRequestComponent } from './components/product-request/product-re
 import { UnitMasterComponent } from './components/unit-master/unit-master';
 import { SalesDashboardComponent } from './components/sales-dashboard/sales-dashboard';
 import { OrderManagementComponent } from './components/order-management/order-management';
-import { OrderStatus, StoreOrder } from './models/grocery.model';
+import { StoreOrder } from './models/grocery.model';
 
 type StoreView =
   | 'shop'
