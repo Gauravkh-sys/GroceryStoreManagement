@@ -5,6 +5,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { InventoryPanelComponent } from './components/inventory-panel/inventory-panel';
 import { CategoryMasterComponent } from './components/category-master/category-master';
 import { ProductCardComponent } from './components/product-card/product-card';
+import { LoginScreenComponent } from './components/login-screen/login-screen';
 import { STORE_WHATSAPP_NUMBER } from './config/store-contact';
 import { GroceryStoreService } from './services/grocery-store.service';
 import { LanguageService } from './services/language.service';
@@ -19,6 +20,7 @@ type StoreView = 'shop' | 'inventory' | 'categories';
     ReactiveFormsModule,
     ProductCardComponent,
     InventoryPanelComponent,
+    LoginScreenComponent,
     CategoryMasterComponent,
   ],
   templateUrl: './app.html',
@@ -32,6 +34,7 @@ export class App {
     ...this.store.activeCategories(),
   ]);
   readonly activeView = signal<StoreView>('shop');
+  readonly isLoginScreen = signal(true);
   readonly selectedCategory = signal('All');
   readonly isCartOpen = signal(false);
   readonly toastMessage = signal<string | null>(null);

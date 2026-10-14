@@ -260,6 +260,199 @@ button:disabled {
   color: #a8ada2;
 }
 
+.login-scene {
+  background:
+    radial-gradient(ellipse at 12% 10%, rgb(216 232 201 / 78%), transparent 38%),
+    radial-gradient(ellipse at 91% 93%, rgb(228 238 215 / 90%), transparent 40%),
+    #f6f8f2;
+}
+
+.login-glow-one {
+  background: rgb(157 190 132 / 35%);
+  filter: blur(80px);
+}
+
+.login-glow-two {
+  background: rgb(197 220 173 / 50%);
+  filter: blur(90px);
+}
+
+.login-glass {
+  border: 1px solid rgb(255 255 255 / 75%);
+  background: rgb(255 255 255 / 52%);
+  box-shadow: 0 32px 100px rgb(52 77 43 / 14%);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+}
+
+.login-story {
+  background:
+    radial-gradient(ellipse at 80% 8%, rgb(255 255 255 / 74%), transparent 40%),
+    linear-gradient(145deg, rgb(242 247 235 / 90%), rgb(228 238 216 / 76%));
+}
+
+.login-illustration span {
+  filter: drop-shadow(0 12px 12px rgb(56 76 48 / 12%));
+}
+
+.login-form-panel {
+  background: rgb(255 255 255 / 35%);
+}
+
+.login-utility-button {
+  border: 1px solid rgb(218 228 209 / 90%);
+  background: rgb(255 255 255 / 62%);
+  color: #52614a;
+  backdrop-filter: blur(12px);
+}
+
+.login-role-switch {
+  border: 1px solid #e8eddf;
+  background: rgb(240 244 235 / 75%);
+}
+
+.login-role-switch button {
+  color: #65705d;
+}
+
+.login-role-switch button.login-role-active {
+  background: rgb(255 255 255 / 94%);
+  color: #2d5732;
+  box-shadow: 0 2px 10px rgb(48 70 42 / 10%);
+}
+
+.login-input {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid #e2e8dc;
+  border-radius: 12px;
+  background: rgb(255 255 255 / 84%);
+  padding: 10px 13px;
+  color: #293526;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.login-input::placeholder {
+  color: #8a9681;
+}
+
+.login-input:focus {
+  border-color: #719b63;
+  box-shadow: 0 0 0 3px rgb(113 155 99 / 22%);
+}
+
+.login-submit {
+  background: linear-gradient(110deg, #31723b, #4b8746);
+}
+
+.login-submit:hover {
+  background: linear-gradient(110deg, #285f31, #3f773a);
+}
+
+.login-notice {
+  border: 1px solid #eadcb4;
+  background: rgb(255 249 230 / 78%);
+  color: #725b25;
+}
+
+html[data-theme="dark"] .login-scene {
+  background:
+    radial-gradient(ellipse at 12% 10%, rgb(73 99 63 / 42%), transparent 38%),
+    radial-gradient(ellipse at 91% 93%, rgb(59 84 51 / 55%), transparent 40%),
+    #121a13;
+}
+
+html[data-theme="dark"] .login-glow-one {
+  background: rgb(91 128 72 / 25%);
+}
+
+html[data-theme="dark"] .login-glow-two {
+  background: rgb(77 111 63 / 30%);
+}
+
+html[data-theme="dark"] .login-glass {
+  border-color: rgb(117 143 108 / 25%);
+  background: rgb(28 38 29 / 76%);
+  box-shadow: 0 32px 100px rgb(0 0 0 / 32%);
+}
+
+html[data-theme="dark"] .login-story {
+  background:
+    radial-gradient(ellipse at 80% 8%, rgb(67 87 58 / 52%), transparent 40%),
+    linear-gradient(145deg, rgb(34 48 35 / 92%), rgb(27 41 29 / 90%));
+}
+
+html[data-theme="dark"] .login-form-panel {
+  background: rgb(22 31 23 / 46%);
+}
+
+html[data-theme="dark"] .login-utility-button {
+  border-color: #435443;
+  background: rgb(28 38 29 / 78%);
+  color: #d4dfce;
+}
+
+html[data-theme="dark"] .login-role-switch {
+  border-color: #3a493a;
+  background: rgb(25 36 26 / 80%);
+}
+
+html[data-theme="dark"] .login-role-switch button {
+  color: #b4c0ad;
+}
+
+html[data-theme="dark"] .login-role-switch button.login-role-active {
+  background: #334633;
+  color: #e5f1df;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 22%);
+}
+
+html[data-theme="dark"] .login-input {
+  border-color: #435243;
+  background: rgb(26 37 27 / 90%);
+  color: #e4ebdf;
+}
+
+html[data-theme="dark"] .login-input::placeholder {
+  color: #aab5a4;
+}
+
+html[data-theme="dark"] .login-input:focus {
+  border-color: #8bac7c;
+  box-shadow: 0 0 0 3px rgb(139 172 124 / 22%);
+}
+
+html[data-theme="dark"] .login-notice {
+  border-color: #665733;
+  background: rgb(57 47 28 / 85%);
+  color: #e4d39e;
+}
+
+.login-glass [class~="text-[#293526]"],
+.login-glass [class~="text-[#394735]"],
+.login-glass [class~="text-[#263723]"] {
+  color: #293526;
+}
+
+.login-glass [class~="text-[#71806a]"],
+.login-glass [class~="text-[#697461]"] {
+  color: #697461;
+}
+
+html[data-theme="dark"] .login-glass [class~="text-[#293526]"],
+html[data-theme="dark"] .login-glass [class~="text-[#394735]"],
+html[data-theme="dark"] .login-glass [class~="text-[#263723]"] {
+  color: #e4ebdf;
+}
+
+html[data-theme="dark"] .login-glass [class~="text-[#71806a]"],
+html[data-theme="dark"] .login-glass [class~="text-[#697461]"] {
+  color: #bdc9b7;
+}
+
 .toast-message {
   animation: toast-in 180ms ease-out both;
 }

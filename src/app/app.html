@@ -1,3 +1,6 @@
+@if (isLoginScreen()) {
+  <app-login-screen (browseStore)="isLoginScreen.set(false)" />
+} @else {
 <div class="min-h-screen bg-[#fafbf8] text-[#293526]" [attr.lang]="language.current()">
   <header class="sticky top-0 z-30 border-b border-[#edf0e8] bg-white/95 backdrop-blur">
     <div class="mx-auto flex h-[72px] max-w-[1440px] items-center justify-between gap-4 px-4 sm:px-7 lg:px-10">
@@ -39,7 +42,7 @@
         <button type="button" class="hidden h-10 items-center gap-2 rounded-full border border-[#e5eadf] px-3 text-xs font-semibold text-[#52614a] transition hover:bg-[#f5f8f0] lg:flex" [attr.aria-label]="language.text('Manage store')" [attr.aria-pressed]="activeView() === 'inventory'" (click)="activeView.set(activeView() === 'inventory' ? 'shop' : 'inventory')">
           <span aria-hidden="true">☷</span> {{ language.text('Manage store') }}
         </button>
-        <button type="button" class="flex h-10 w-10 items-center justify-center rounded-full bg-[#edf3e7] text-sm font-bold text-[#3d6037]" [attr.aria-label]="language.text('Store profile')">S</button>
+        <button type="button" class="flex h-10 w-10 items-center justify-center rounded-full bg-[#edf3e7] text-sm font-bold text-[#3d6037]" [attr.aria-label]="language.text('Store profile')" (click)="isLoginScreen.set(true)">S</button>
       </div>
     </div>
     <nav class="flex gap-1 border-t border-[#f2f3ef] px-4 py-2 md:hidden" [attr.aria-label]="language.text('Main navigation')">

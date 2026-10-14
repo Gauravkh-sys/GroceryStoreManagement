@@ -1,0 +1,149 @@
+<main class="login-scene relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-8 sm:px-8">
+  <div class="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+    <div class="login-glow login-glow-one absolute -left-32 -top-32 h-96 w-96 rounded-full"></div>
+    <div class="login-glow login-glow-two absolute -bottom-40 -right-32 h-[34rem] w-[34rem] rounded-full"></div>
+    <div class="absolute inset-0 opacity-[0.14] [background-image:radial-gradient(#52724c_0.7px,transparent_0.7px)] [background-size:18px_18px]"></div>
+  </div>
+
+  <div class="absolute right-4 top-4 z-10 flex items-center gap-2 sm:right-8 sm:top-7">
+    <button
+      type="button"
+      class="login-utility-button rounded-full px-3 py-2 text-xs font-bold transition focus:outline-none focus:ring-2 focus:ring-[#31723b]"
+      [attr.aria-label]="language.text(language.current() === 'en' ? 'Switch to Hindi' : 'Switch to English')"
+      [attr.title]="language.text(language.current() === 'en' ? 'Switch to Hindi' : 'Switch to English')"
+      (click)="language.toggle()"
+    >{{ language.current() === 'en' ? 'हिंदी' : 'EN' }}</button>
+    <button
+      type="button"
+      class="login-utility-button flex h-10 w-10 items-center justify-center rounded-full transition focus:outline-none focus:ring-2 focus:ring-[#31723b]"
+      [attr.aria-label]="language.text(theme.currentTheme() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode')"
+      [attr.aria-pressed]="theme.currentTheme() === 'dark'"
+      (click)="theme.toggleTheme()"
+    >
+      @if (theme.currentTheme() === 'dark') {
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>
+      } @else {
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M20.3 15.4A8.5 8.5 0 0 1 8.6 3.7 8.5 8.5 0 1 0 20.3 15.4Z"/></svg>
+      }
+    </button>
+  </div>
+
+  <section class="login-glass relative z-[1] grid w-full max-w-[1040px] overflow-hidden rounded-[30px] lg:min-h-[620px] lg:grid-cols-[1fr_0.92fr]">
+    <div class="login-story relative hidden flex-col justify-between overflow-hidden p-10 lg:flex xl:p-14">
+      <div class="relative z-10">
+        <div class="flex items-center gap-3">
+          <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#31723b] text-2xl text-white shadow-lg shadow-[#31723b]/20" aria-hidden="true">✿</span>
+          <span class="text-2xl font-bold tracking-tight text-[#243421]">freshly<span class="text-[#62a34d]">.</span></span>
+        </div>
+        <p class="mt-16 max-w-sm text-xs font-bold uppercase tracking-[0.2em] text-[#5e7a50]">{{ language.text('Your neighbourhood market, thoughtfully stocked.') }}</p>
+        <h1 class="mt-4 max-w-md text-4xl font-bold leading-[1.12] tracking-[-0.04em] text-[#263723] xl:text-5xl">{{ language.text('Fresh groceries, a little closer to home.') }}</h1>
+        <p class="mt-5 max-w-sm text-base leading-7 text-[#697461]">{{ language.text('Fresh picks, friendly service, every day.') }}</p>
+      </div>
+
+      <div class="login-illustration relative mx-auto flex h-56 w-full max-w-[390px] items-center justify-center" aria-hidden="true">
+        <div class="absolute h-48 w-48 rounded-full border border-[#b6cba8]/60"></div>
+        <div class="absolute h-64 w-64 rounded-full border border-[#b6cba8]/40"></div>
+        <span class="absolute left-[17%] top-[18%] rotate-[-12deg] text-5xl">🥬</span>
+        <span class="absolute right-[17%] top-[13%] rotate-[10deg] text-5xl">🍊</span>
+        <span class="relative z-10 text-[118px] drop-shadow-xl">🧺</span>
+        <span class="absolute bottom-[13%] left-[25%] rotate-[9deg] text-4xl">🍎</span>
+        <span class="absolute bottom-[12%] right-[24%] rotate-[-8deg] text-4xl">🥖</span>
+      </div>
+
+      <div class="relative z-10 flex items-center justify-between text-xs text-[#71806a]">
+        <span>{{ language.text('Good food, good mood') }}</span>
+        <span class="flex items-center gap-2"><span class="h-2 w-2 rounded-full bg-[#70a35a]"></span>{{ language.text('Explore the market') }}</span>
+      </div>
+    </div>
+
+    <div class="login-form-panel flex items-center justify-center p-6 sm:p-10 lg:p-12 xl:p-14">
+      <div class="w-full max-w-[390px]">
+        <div class="mb-8 lg:hidden">
+          <div class="flex items-center gap-2.5">
+            <span class="flex h-11 w-11 items-center justify-center rounded-[14px] bg-[#31723b] text-xl text-white" aria-hidden="true">✿</span>
+            <span class="text-xl font-bold tracking-tight text-[#243421]">freshly<span class="text-[#62a34d]">.</span></span>
+          </div>
+        </div>
+
+        <p class="text-xs font-bold uppercase tracking-[0.18em] text-[#6b8b5d]">{{ language.text('Welcome to freshly') }}</p>
+        <h2 class="mt-2 text-3xl font-bold tracking-tight text-[#293526]">{{ language.text('Sign in to your account') }}</h2>
+        <p class="mt-2 text-sm leading-6 text-[#71806a]">{{ language.text('Choose how you want to continue') }}</p>
+
+        <div class="login-role-switch mt-7 grid grid-cols-2 rounded-2xl p-1.5" role="group" [attr.aria-label]="language.text('Login options')">
+          <button
+            type="button"
+            class="flex min-h-12 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#31723b]"
+            [class.login-role-active]="role() === 'customer'"
+            [attr.aria-pressed]="role() === 'customer'"
+            (click)="selectRole('customer')"
+          ><span aria-hidden="true">🛍️</span>{{ language.text('Customer') }}</button>
+          <button
+            type="button"
+            class="flex min-h-12 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#31723b]"
+            [class.login-role-active]="role() === 'manager'"
+            [attr.aria-pressed]="role() === 'manager'"
+            (click)="selectRole('manager')"
+          ><span aria-hidden="true">🏪</span>{{ language.text('Store manager') }}</button>
+        </div>
+
+        <form class="mt-6 space-y-4" (ngSubmit)="attemptSignIn()" [attr.aria-label]="language.text('Sign in form')" novalidate>
+          <div>
+            <label for="login-identifier" class="mb-1.5 block text-sm font-semibold text-[#394735]">{{ language.text(role() === 'manager' ? 'Email address' : 'Email or phone number') }}</label>
+            <input
+              id="login-identifier"
+              class="login-input"
+              type="text"
+              [formControl]="loginIdentifier"
+              [attr.autocomplete]="role() === 'manager' ? 'username' : 'username'"
+              [placeholder]="language.text(role() === 'manager' ? 'Enter your email address' : 'Enter your email or phone number')"
+              [attr.aria-invalid]="loginIdentifier.touched && loginIdentifier.invalid"
+              [attr.aria-describedby]="loginIdentifier.touched && loginIdentifier.invalid ? 'login-identifier-error' : null"
+              required
+            >
+            @if (loginIdentifier.touched && loginIdentifier.hasError('required')) {
+              <p id="login-identifier-error" class="mt-1.5 text-xs text-rose-700" role="alert">{{ language.text('This field is required.') }}</p>
+            } @else if (loginIdentifier.touched && loginIdentifier.hasError('email')) {
+              <p id="login-identifier-error" class="mt-1.5 text-xs text-rose-700" role="alert">{{ language.text('Enter a valid email address.') }}</p>
+            }
+          </div>
+          <div>
+            <label for="login-password" class="mb-1.5 block text-sm font-semibold text-[#394735]">{{ language.text('Password') }}</label>
+            <input
+              id="login-password"
+              class="login-input"
+              type="password"
+              [formControl]="password"
+              autocomplete="current-password"
+              [placeholder]="language.text('Enter your password')"
+              [attr.aria-invalid]="password.touched && password.invalid"
+              [attr.aria-describedby]="password.touched && password.invalid ? 'login-password-error' : null"
+              minlength="8"
+              required
+            >
+            @if (password.touched && password.hasError('required')) {
+              <p id="login-password-error" class="mt-1.5 text-xs text-rose-700" role="alert">{{ language.text('This field is required.') }}</p>
+            } @else if (password.touched && password.hasError('minlength')) {
+              <p id="login-password-error" class="mt-1.5 text-xs text-rose-700" role="alert">{{ language.text('Password must be at least 8 characters.') }}</p>
+            }
+          </div>
+
+          @if (statusMessage()) {
+            <p class="rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3 text-sm leading-5 text-amber-900" role="alert">{{ language.text(statusMessage()) }}</p>
+          }
+
+          <button type="submit" class="login-submit flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white shadow-lg shadow-[#31723b]/15 transition hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-[#31723b] focus:ring-offset-2">
+            {{ language.text('Sign in') }} <span aria-hidden="true">→</span>
+          </button>
+        </form>
+
+        <p class="login-notice mt-5 rounded-xl px-3.5 py-3 text-xs leading-5">{{ language.text('Authentication is not configured yet. Sign-in will be enabled once a secure service is connected.') }}</p>
+        <div class="mt-5 text-center">
+          <button type="button" class="rounded-md text-sm font-semibold text-[#397343] underline-offset-4 hover:underline focus:outline-none focus:ring-2 focus:ring-[#31723b]" (click)="browseStore.emit()">{{ language.text('Browse the store without signing in') }}</button>
+          <p class="mt-3 text-xs text-[#899284]">{{ language.text('No registration is available yet.') }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <p class="absolute bottom-3 left-0 right-0 z-10 px-4 text-center text-[10px] text-[#798574] sm:bottom-5 sm:text-xs">{{ language.text('A smoother way to shop and manage your store.') }}</p>
+</main>
