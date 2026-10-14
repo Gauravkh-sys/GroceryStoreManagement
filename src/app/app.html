@@ -15,6 +15,19 @@
       </nav>
 
       <div class="flex shrink-0 items-center gap-2 sm:gap-3">
+        <button
+          type="button"
+          class="flex h-10 w-10 items-center justify-center rounded-full border border-stone-200 bg-white text-[#33402f] transition hover:bg-[#f3f7ed] focus:outline-none focus:ring-2 focus:ring-[#31723b] sm:h-11 sm:w-11"
+          [attr.aria-label]="theme.currentTheme() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
+          [attr.aria-pressed]="theme.currentTheme() === 'dark'"
+          (click)="theme.toggleTheme()"
+        >
+          @if (theme.currentTheme() === 'dark') {
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>
+          } @else {
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M20.3 15.4A8.5 8.5 0 0 1 8.6 3.7 8.5 8.5 0 1 0 20.3 15.4Z"/></svg>
+          }
+        </button>
         <button type="button" class="relative flex h-10 w-10 items-center justify-center rounded-full border border-stone-200 bg-white text-[#33402f] transition hover:bg-[#f3f7ed] focus:outline-none focus:ring-2 focus:ring-[#31723b] sm:h-11 sm:w-11" aria-label="Open shopping cart" (click)="isCartOpen.set(true)">
           <svg class="h-[19px] w-[19px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h2l2.2 11.2a2 2 0 0 0 2 1.6h8.9a2 2 0 0 0 2-1.6L21 8H6"/><circle cx="10" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg>
           @if (store.cartCount() > 0) {
@@ -114,7 +127,7 @@
 
   <footer class="border-t border-[#edf0e8] bg-white">
     <div class="mx-auto flex max-w-[1440px] flex-col items-center justify-between gap-2 px-4 py-5 text-xs text-stone-400 sm:flex-row sm:px-7 lg:px-10">
-      <p>© 2026 freshly market. Made for good days.</p>
+      <p>© 2026, Gaurav Mishra -A freshly market. Made for good days.</p>
       <p>Fresh choices, right around the corner <span class="text-[#72a85c]" aria-hidden="true">✿</span></p>
     </div>
   </footer>

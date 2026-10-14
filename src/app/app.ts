@@ -6,6 +6,7 @@ import { InventoryPanelComponent } from './components/inventory-panel/inventory-
 import { ProductCardComponent } from './components/product-card/product-card';
 import { CATEGORIES, ProductCategory } from './models/grocery.model';
 import { GroceryStoreService } from './services/grocery-store.service';
+import { ThemeService } from './services/theme.service';
 
 type StoreView = 'shop' | 'inventory';
 type CategoryFilter = 'All' | ProductCategory;
@@ -22,6 +23,7 @@ type CategoryFilter = 'All' | ProductCategory;
 })
 export class App {
   readonly store = inject(GroceryStoreService);
+  readonly theme = inject(ThemeService);
   readonly categories: readonly CategoryFilter[] = ['All', ...CATEGORIES];
   readonly activeView = signal<StoreView>('shop');
   readonly selectedCategory = signal<CategoryFilter>('All');
