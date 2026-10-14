@@ -1,0 +1,129 @@
+<section class="space-y-6">
+  <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+    <div>
+      <p class="text-xs font-bold uppercase tracking-[0.16em] text-[#718368]">Store manager</p>
+      <h1 class="mt-1 text-2xl font-bold tracking-tight text-[#263423] sm:text-3xl">Inventory</h1>
+      <p class="mt-1 text-sm text-stone-500">Keep your shelves fresh and up to date.</p>
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+      <div class="rounded-2xl border border-[#e8eddf] bg-white px-5 py-3">
+        <p class="text-xs text-stone-500">Products</p>
+        <p class="mt-1 text-xl font-bold text-[#2d5732]">{{ store.products().length }}</p>
+      </div>
+      <div class="rounded-2xl border border-amber-100 bg-amber-50/60 px-5 py-3">
+        <p class="text-xs text-amber-800">Running low</p>
+        <p class="mt-1 text-xl font-bold text-amber-900">{{ lowStockCount }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_330px]">
+    <div class="overflow-hidden rounded-2xl border border-stone-100 bg-white shadow-sm">
+      <div class="flex items-center justify-between border-b border-stone-100 px-5 py-4">
+        <div>
+          <h2 class="font-semibold text-[#293526]">Product stock</h2>
+          <p class="mt-0.5 text-xs text-stone-400">Changes are saved in this session.</p>
+        </div>
+        <span class="rounded-full bg-[#f0f5eb] px-3 py-1 text-xs font-semibold text-[#4c6845]">Live inventory</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full min-w-[590px] text-left text-sm">
+          <thead class="bg-[#fbfcf9] text-[10px] font-bold uppercase tracking-[0.1em] text-stone-400">
+            <tr>
+              <th class="px-5 py-3">Product</th>
+              <th class="px-4 py-3">Category</th>
+              <th class="px-4 py-3">Price</th>
+              <th class="px-4 py-3">On hand</th>
+              <th class="px-5 py-3 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-stone-100">
+            @for (product of store.products(); track product.id) {
+              <tr class="transition hover:bg-[#fbfcf9]">
+                <td class="px-5 py-3.5">
+                  <div class="flex items-center gap-3">
+                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#f3f7ed] text-xl" aria-hidden="true">{{ product.icon }}</span>
+                    <span class="font-medium text-[#33402f]">{{ product.name }}</span>
+                  </div>
+                </td>
+                <td class="px-4 py-3.5 text-xs text-stone-500">{{ product.category }}</td>
+                <td class="px-4 py-3.5 font-medium text-stone-700">{{ product.price | currency:'INR':'symbol':'1.2-2':'en-IN' }}</td>
+                <td class="px-4 py-3.5">
+                  <span class="rounded-full px-2.5 py-1 text-xs font-semibold" [class]="product.stock <= 5 ? 'bg-rose-50 text-rose-700' : product.stock <= 12 ? 'bg-amber-50 text-amber-800' : 'bg-emerald-50 text-emerald-700'">
+                    {{ product.stock }} {{ product.unit }}{{ product.stock === 1 ? '' : 's' }}
+                  </span>
+                </td>
+                <td class="px-5 py-3.5 text-right">
+                  <button
+                    type="button"
+                    class="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-300"
+                    [attr.aria-label]="'Delete ' + product.name"
+                    (click)="deleteProduct(product.id)"
+                  >
+                    Remove
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="5" class="px-5 py-12 text-center text-sm text-stone-400">No products in inventory yet.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <aside class="h-fit rounded-2xl border border-stone-100 bg-white p-5 shadow-sm">
+      <div class="mb-5 flex items-center gap-3">
+        <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#edf4e7] text-lg" aria-hidden="true">✦</span>
+        <div>
+          <h2 class="font-semibold text-[#293526]">Add a product</h2>
+          <p class="text-xs text-stone-400">Fill in the product details.</p>
+        </div>
+      </div>
+
+      <form class="space-y-4" [formGroup]="productForm" (ngSubmit)="addProduct()">
+        <label class="block text-xs font-semibold text-stone-600">
+          Product name
+          <input class="form-field mt-1.5" formControlName="name" placeholder="e.g. Crisp red apples" />
+        </label>
+        @if (productForm.controls.name.touched && productForm.controls.name.invalid) {
+          <p class="-mt-3 text-xs text-rose-600">Enter a name with no more than 60 characters.</p>
+        }
+        <label class="block text-xs font-semibold text-stone-600">
+          Category
+          <select class="form-field mt-1.5" formControlName="category">
+            @for (category of categories; track category) {
+              <option [value]="category">{{ category }}</option>
+            }
+          </select>
+        </label>
+        <div class="grid grid-cols-2 gap-3">
+          <label class="block text-xs font-semibold text-stone-600">
+            Price (₹)
+            <input class="form-field mt-1.5" type="number" min="0.01" step="0.01" formControlName="price" />
+          </label>
+          <label class="block text-xs font-semibold text-stone-600">
+            Stock
+            <input class="form-field mt-1.5" type="number" min="0" max="9999" step="1" formControlName="stock" />
+          </label>
+        </div>
+        @if ((productForm.controls.price.touched && productForm.controls.price.invalid) || (productForm.controls.stock.touched && productForm.controls.stock.invalid)) {
+          <p class="-mt-3 text-xs text-rose-600">Enter a valid price and stock quantity.</p>
+        }
+        <div class="grid grid-cols-[76px_1fr] gap-3">
+          <label class="block text-xs font-semibold text-stone-600">
+            Icon
+            <input class="form-field mt-1.5 text-center text-lg" formControlName="icon" maxlength="4" />
+          </label>
+          <label class="block text-xs font-semibold text-stone-600">
+            Sold as
+            <input class="form-field mt-1.5" formControlName="unit" placeholder="e.g. bag" />
+          </label>
+        </div>
+        <button class="w-full rounded-xl bg-[#31723b] py-3 text-sm font-semibold text-white transition hover:bg-[#245e2e] focus:outline-none focus:ring-2 focus:ring-[#31723b] focus:ring-offset-2" type="submit">
+          Add to inventory
+        </button>
+      </form>
+    </aside>
+  </div>
+</section>
