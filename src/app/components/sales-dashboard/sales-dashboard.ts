@@ -33,10 +33,14 @@ export class SalesDashboardComponent {
       .reduce((sum, order) => sum + order.total, 0),
   );
   readonly topProducts = computed(() => {
-    const totals = new Map<string, { name: string; quantity: number }>();
+    const totals = new Map<
+      string,
+      { productId: string; name: string; quantity: number }
+    >();
     for (const order of this.completedOrders()) {
       for (const item of order.items) {
         const current = totals.get(item.productId) ?? {
+          productId: item.productId,
           name: item.name,
           quantity: 0,
         };
