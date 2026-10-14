@@ -36,6 +36,7 @@ command and `dist/GroceryStoreManagement/browser` as the publish directory.
 - Add products to the basket, adjust quantities, remove items, and see the subtotal, 8% tax, and total update immediately.
 - Complete checkout to decrement inventory and clear the basket.
 - Switch to Inventory to add products with a validated reactive form or remove products.
+- Choose product icons from a searchable, grouped emoji library for groceries, grains, snacks, cleaning supplies, personal care, and farm essentials, or enter a custom emoji.
 - Manage categories by adding and renaming them, or archiving and restoring them. Archived categories disappear from shop filters and product forms; products already assigned to them remain visible but cannot be added to the basket until the category is restored.
 - Product inventory, categories, basket, and checkout changes are held in the in-memory mock store and reset on refresh.
 

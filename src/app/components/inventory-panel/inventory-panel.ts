@@ -1,6 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { PRODUCT_ICON_GROUPS } from '../../data/product-icons';
 import { GroceryStoreService } from '../../services/grocery-store.service';
 
 @Component({
@@ -12,13 +14,33 @@ export class InventoryPanelComponent {
   private readonly formBuilder = inject(FormBuilder);
   readonly store = inject(GroceryStoreService);
   readonly categories = this.store.activeCategories;
+  readonly iconGroups = PRODUCT_ICON_GROUPS;
+  readonly iconSearchControl = new FormControl('', { nonNullable: true });
+  private readonly iconSearch = toSignal(this.iconSearchControl.valueChanges, {
+    initialValue: this.iconSearchControl.value,
+  });
+  readonly filteredIconGroups = computed(() => {
+    const query = this.iconSearch().trim().toLocaleLowerCase();
+    if (!query) {
+      return this.iconGroups;
+    }
+
+    return this.iconGroups
+      .map((group) => ({
+        ...group,
+        icons: group.icons.filter((option) =>
+          option.label.toLocaleLowerCase().includes(query),
+        ),
+      }))
+      .filter((group) => group.icons.length > 0);
+  });
 
   readonly productForm = this.formBuilder.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(60)]],
     category: [this.categories()[0] ?? '', Validators.required],
     price: [0, [Validators.required, Validators.min(0.01)]],
     stock: [1, [Validators.required, Validators.min(0), Validators.max(9999)]],
-    icon: ['🛒', Validators.required],
+    icon: ['🛒', [Validators.required, Validators.maxLength(12)]],
     unit: ['item', [Validators.required, Validators.maxLength(30)]],
   });
 
@@ -45,6 +67,11 @@ export class InventoryPanelComponent {
       icon: '🛒',
       unit: 'item',
     });
+  }
+
+  selectIcon(icon: string): void {
+    this.productForm.controls.icon.setValue(icon);
+    this.productForm.controls.icon.markAsDirty();
   }
 
   deleteProduct(productId: string): void {
