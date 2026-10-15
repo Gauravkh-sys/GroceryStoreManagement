@@ -50,14 +50,26 @@ export class App {
   readonly language = inject(LanguageService);
   readonly theme = inject(ThemeService);
   private readonly document = inject(DOCUMENT);
-  readonly categories = computed(() => [
+  readonly departmentFilters = computed(() => [
     'All',
-    ...this.store.activeCategories(),
+    ...this.store.activeCategoryGroups().map((department) => department.name),
   ]);
+  readonly subcategoryFilters = computed(() => {
+    const selectedDepartment = this.selectedDepartment();
+    return [
+      'All',
+      ...this.store.activeCategories().filter(
+        (category) =>
+          selectedDepartment === 'All' ||
+          this.store.categoryDepartment(category) === selectedDepartment,
+      ),
+    ];
+  });
   readonly activeView = signal<StoreView>('shop');
   readonly isLoginScreen = signal(true);
   readonly currentRole = signal<AppRole>('guest');
   readonly currentMobile = signal('');
+  readonly selectedDepartment = signal('All');
   readonly selectedCategory = signal('All');
   readonly isCartOpen = signal(false);
   readonly toastMessage = signal<string | null>(null);
@@ -70,16 +82,27 @@ export class App {
     initialValue: this.searchControl.value,
   });
   readonly filteredProducts = computed(() => {
+    const department = this.selectedDepartment();
     const category = this.selectedCategory();
     const query = this.searchText().trim().toLocaleLowerCase();
     return this.store.products().filter((product) => {
-      const matchesCategory = category === 'All' || product.category === category;
+      const matchesDepartment =
+        department === 'All' ||
+        this.store.categoryDepartment(product.category) === department;
+      const matchesCategory =
+        category === 'All' || product.category === category;
       const matchesSearch =
         product.name.toLocaleLowerCase().includes(query) ||
         this.language.product(product).toLocaleLowerCase().includes(query);
-      return matchesCategory && matchesSearch;
+      return matchesDepartment && matchesCategory && matchesSearch;
     });
   });
+  readonly selectedCategoryDescription = computed(
+    () =>
+      this.store.categories().find(
+        (category) => category.name === this.selectedCategory(),
+      )?.description ?? '',
+  );
   readonly whatsappOrderUrl = computed(() => {
     const items = this.store.cartItems();
     const formatPrice = (amount: number) =>
@@ -114,9 +137,22 @@ export class App {
   constructor() {
     effect(() => {
       const selectedCategory = this.selectedCategory();
+      const selectedDepartment = this.selectedDepartment();
+      if (
+        selectedDepartment !== 'All' &&
+        !this.store.activeCategoryGroups().some(
+          (department) => department.name === selectedDepartment,
+        )
+      ) {
+        this.selectedDepartment.set('All');
+        this.selectedCategory.set('All');
+      }
       if (
         selectedCategory !== 'All' &&
-        !this.store.activeCategories().includes(selectedCategory)
+        (!this.store.activeCategories().includes(selectedCategory) ||
+          (selectedDepartment !== 'All' &&
+            this.store.categoryDepartment(selectedCategory) !==
+              selectedDepartment))
       ) {
         this.selectedCategory.set('All');
       }
@@ -125,6 +161,16 @@ export class App {
 
   selectCategory(category: string): void {
     this.selectedCategory.set(category);
+  }
+
+  selectDepartment(department: string): void {
+    this.selectedDepartment.set(department);
+    this.selectedCategory.set('All');
+  }
+
+  clearCategoryFilters(): void {
+    this.selectedDepartment.set('All');
+    this.selectedCategory.set('All');
   }
 
   completeDemoLogin(session: { role: LoginRole; mobile: string }): void {

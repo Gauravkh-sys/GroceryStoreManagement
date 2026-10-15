@@ -29,28 +29,34 @@
           <span class="rounded-full bg-[#f0f5eb] px-3 py-1 text-xs font-semibold text-[#4c6845]">{{ language.text('Visible') }}</span>
         </div>
         <ul class="divide-y divide-stone-100">
-          @for (category of activeCategories(); track category.name) {
-            <li class="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-              @if (editingCategory() === category.name) {
-                <form class="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row" [formGroup]="renameForm" (ngSubmit)="saveRename(category.name)">
-                  <label class="sr-only" [for]="'rename-' + category.name">{{ language.text('Rename {name}', { name: language.category(category.name) }) }}</label>
-                  <input [id]="'rename-' + category.name" class="form-field" formControlName="name" maxlength="40" autocomplete="off" />
-                  <div class="flex shrink-0 gap-2">
-                    <button class="rounded-lg bg-[#31723b] px-3 py-2 text-xs font-semibold text-white hover:bg-[#245e2e] focus:outline-none focus:ring-2 focus:ring-[#31723b] focus:ring-offset-2" type="submit">{{ language.text('Save') }}</button>
-                    <button class="rounded-lg border border-stone-200 px-3 py-2 text-xs font-semibold text-stone-600 hover:bg-stone-100 focus:outline-none focus:ring-2 focus:ring-[#31723b] focus:ring-offset-2" type="button" (click)="cancelRename()">{{ language.text('Cancel') }}</button>
+          @for (department of activeCategoryGroups(); track department.name) {
+            <li class="bg-[#f8faf5] px-5 py-3 font-semibold text-[#395537]">{{ language.text(department.name) }}</li>
+            @for (category of department.categories; track category.name) {
+              <li class="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                @if (editingCategory() === category.name) {
+                  <form class="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row" [formGroup]="renameForm" (ngSubmit)="saveRename(category.name)">
+                    <label class="sr-only" [for]="'rename-' + category.name">{{ language.text('Rename {name}', { name: language.category(category.name) }) }}</label>
+                    <input [id]="'rename-' + category.name" class="form-field" formControlName="name" maxlength="40" autocomplete="off" />
+                    <div class="flex shrink-0 gap-2">
+                      <button class="rounded-lg bg-[#31723b] px-3 py-2 text-xs font-semibold text-white hover:bg-[#245e2e] focus:outline-none focus:ring-2 focus:ring-[#31723b] focus:ring-offset-2" type="submit">{{ language.text('Save') }}</button>
+                      <button class="rounded-lg border border-stone-200 px-3 py-2 text-xs font-semibold text-stone-600 hover:bg-stone-100 focus:outline-none focus:ring-2 focus:ring-[#31723b] focus:ring-offset-2" type="button" (click)="cancelRename()">{{ language.text('Cancel') }}</button>
+                    </div>
+                  </form>
+                } @else {
+                  <div class="min-w-0">
+                    <p class="truncate font-medium text-[#33402f]">{{ language.category(category.name) }}</p>
+                    @if (category.description) {
+                      <p class="mt-0.5 text-xs text-stone-400">{{ language.text(category.description) }}</p>
+                    }
+                    <p class="mt-0.5 text-xs text-stone-400">{{ language.productCount(productCount(category.name)) }}</p>
                   </div>
-                </form>
-              } @else {
-                <div class="min-w-0">
-                  <p class="truncate font-medium text-[#33402f]">{{ language.category(category.name) }}</p>
-                  <p class="mt-0.5 text-xs text-stone-400">{{ language.productCount(productCount(category.name)) }}</p>
-                </div>
-                <div class="flex shrink-0 gap-2">
-                  <button class="rounded-lg border border-stone-200 px-3 py-2 text-xs font-semibold text-stone-600 transition hover:bg-stone-100 focus:outline-none focus:ring-2 focus:ring-[#31723b] focus:ring-offset-2" type="button" [attr.aria-label]="language.text('Rename {name}', { name: language.category(category.name) })" (click)="beginRename(category.name)">{{ language.text('Rename') }}</button>
-                  <button class="rounded-lg px-3 py-2 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-300 focus:ring-offset-2" type="button" [attr.aria-label]="language.text('Archive {name}', { name: language.category(category.name) })" (click)="archiveCategory(category.name)">{{ language.text('Archive') }}</button>
-                </div>
-              }
-            </li>
+                  <div class="flex shrink-0 gap-2">
+                    <button class="rounded-lg border border-stone-200 px-3 py-2 text-xs font-semibold text-stone-600 transition hover:bg-stone-100 focus:outline-none focus:ring-2 focus:ring-[#31723b] focus:ring-offset-2" type="button" [attr.aria-label]="language.text('Rename {name}', { name: language.category(category.name) })" (click)="beginRename(category.name)">{{ language.text('Rename') }}</button>
+                    <button class="rounded-lg px-3 py-2 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-300 focus:ring-offset-2" type="button" [attr.aria-label]="language.text('Archive {name}', { name: language.category(category.name) })" (click)="archiveCategory(category.name)">{{ language.text('Archive') }}</button>
+                  </div>
+                }
+              </li>
+            }
           } @empty {
             <li class="px-5 py-10 text-center text-sm text-stone-500">{{ language.text('No active categories. Add or restore a category to use it in the store.') }}</li>
           }
@@ -63,14 +69,20 @@
           <p class="mt-0.5 text-xs text-stone-400">{{ language.text('Hidden from shop filters and product forms. Restore them any time.') }}</p>
         </div>
         <ul class="divide-y divide-stone-100">
-          @for (category of archivedCategories(); track category.name) {
-            <li class="flex items-center justify-between gap-3 px-5 py-4">
-              <div class="min-w-0">
-                <p class="truncate font-medium text-stone-500 line-through">{{ language.category(category.name) }}</p>
-                <p class="mt-0.5 text-xs text-stone-400">{{ language.productsVisibleCount(productCount(category.name)) }}</p>
-              </div>
-              <button class="shrink-0 rounded-lg border border-stone-200 px-3 py-2 text-xs font-semibold text-[#2d5732] transition hover:bg-[#f3f7ed] focus:outline-none focus:ring-2 focus:ring-[#31723b] focus:ring-offset-2" type="button" [attr.aria-label]="language.text('Restore {name}', { name: language.category(category.name) })" (click)="restoreCategory(category.name)">{{ language.text('Restore') }}</button>
-            </li>
+          @for (department of archivedCategoryGroups(); track department.name) {
+            <li class="bg-[#f8faf5] px-5 py-3 font-semibold text-[#395537]">{{ language.text(department.name) }}</li>
+            @for (category of department.categories; track category.name) {
+              <li class="flex items-center justify-between gap-3 px-5 py-4">
+                <div class="min-w-0">
+                  <p class="truncate font-medium text-stone-500 line-through">{{ language.category(category.name) }}</p>
+                  @if (category.description) {
+                    <p class="mt-0.5 text-xs text-stone-400">{{ language.text(category.description) }}</p>
+                  }
+                  <p class="mt-0.5 text-xs text-stone-400">{{ language.productsVisibleCount(productCount(category.name)) }}</p>
+                </div>
+                <button class="shrink-0 rounded-lg border border-stone-200 px-3 py-2 text-xs font-semibold text-[#2d5732] transition hover:bg-[#f3f7ed] focus:outline-none focus:ring-2 focus:ring-[#31723b] focus:ring-offset-2" type="button" [attr.aria-label]="language.text('Restore {name}', { name: language.category(category.name) })" (click)="restoreCategory(category.name)">{{ language.text('Restore') }}</button>
+              </li>
+            }
           } @empty {
             <li class="px-5 py-8 text-center text-sm text-stone-500">{{ language.text('No archived categories.') }}</li>
           }
@@ -94,6 +106,18 @@
         @if (addForm.controls.name.touched && addForm.controls.name.invalid) {
           <p class="-mt-3 text-xs text-rose-600">{{ language.text('Enter a name with no more than 40 characters.') }}</p>
         }
+        <label class="block text-xs font-semibold text-stone-600">
+          {{ language.text('Department') }}
+          <select class="form-field mt-1.5" formControlName="department">
+            @for (department of departments; track department) {
+              <option [value]="department">{{ language.text(department) }}</option>
+            }
+          </select>
+        </label>
+        <label class="block text-xs font-semibold text-stone-600">
+          {{ language.text('Description (optional)') }}
+          <textarea class="form-field mt-1.5 min-h-20" formControlName="description" maxlength="160" [placeholder]="language.text('Add a short description')"></textarea>
+        </label>
         <button class="w-full rounded-xl bg-[#31723b] py-3 text-sm font-semibold text-white transition hover:bg-[#245e2e] focus:outline-none focus:ring-2 focus:ring-[#31723b] focus:ring-offset-2" type="submit">{{ language.text('Add category') }}</button>
       </form>
       <p class="mt-4 text-xs leading-5 text-stone-400">{{ language.text('Archiving hides a category from shoppers and product forms. Existing products stay visible, but shoppers cannot add them to their basket until you restore the category.') }}</p>

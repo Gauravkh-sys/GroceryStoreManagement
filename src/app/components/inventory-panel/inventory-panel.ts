@@ -16,6 +16,7 @@ export class InventoryPanelComponent {
   readonly store = inject(GroceryStoreService);
   readonly language = inject(LanguageService);
   readonly categories = this.store.activeCategories;
+  readonly categoryGroups = this.store.activeCategoryGroups;
   readonly units = this.store.units;
   readonly iconGroups = PRODUCT_ICON_GROUPS;
   readonly iconSearchControl = new FormControl('', { nonNullable: true });

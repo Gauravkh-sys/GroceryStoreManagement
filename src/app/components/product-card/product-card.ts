@@ -14,6 +14,9 @@ export class ProductCardComponent {
   readonly language = inject(LanguageService);
   readonly product = input.required<Product>();
   readonly add = output<string>();
+  readonly categoryDepartment = computed(() =>
+    this.store.categoryDepartment(this.product().category),
+  );
   readonly categoryIsActive = computed(() =>
     this.store.isCategoryActive(this.product().category),
   );

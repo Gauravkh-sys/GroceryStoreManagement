@@ -9,11 +9,15 @@ import {
 } from '@angular/core';
 import { INITIAL_PRODUCTS } from '../data/grocery-data';
 import {
+  CATEGORY_DEPARTMENTS,
+  DEFAULT_CATEGORIES,
+  LEGACY_CATEGORY_NAMES,
+} from '../data/category-data';
+import {
   CartItem,
   DetailedCartItem,
   GroceryCategory,
   Product,
-  CATEGORIES,
   ProductRequest,
   ProductRequestStatus,
   StoreOrder,
@@ -21,7 +25,20 @@ import {
 } from '../models/grocery.model';
 
 const DEMO_STORAGE_KEY = 'durvijay-store-demo-v1';
-const INITIAL_UNITS = ['item', 'kg', 'g', 'litre', 'pack', 'bunch', 'dozen', 'bag', 'bottle'];
+const INITIAL_UNITS = [
+  ...new Set([
+    'item',
+    'kg',
+    'g',
+    'litre',
+    'pack',
+    'bunch',
+    'dozen',
+    'bag',
+    'bottle',
+    ...INITIAL_PRODUCTS.map((product) => product.unit),
+  ]),
+];
 
 interface StoreSnapshot {
   products: Product[];
@@ -35,6 +52,8 @@ interface StoreSnapshot {
 export type CategoryMutationResult =
   | 'success'
   | 'invalid-name'
+  | 'invalid-department'
+  | 'invalid-description'
   | 'duplicate'
   | 'not-found'
   | 'already-archived'
@@ -50,9 +69,7 @@ export class GroceryStoreService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly productState = signal<Product[]>(INITIAL_PRODUCTS);
   private readonly cartState = signal<CartItem[]>([]);
-  private readonly categoryState = signal<GroceryCategory[]>(
-    CATEGORIES.map((name) => ({ name, active: true })),
-  );
+  private readonly categoryState = signal<GroceryCategory[]>(DEFAULT_CATEGORIES);
   private readonly unitState = signal<string[]>(INITIAL_UNITS);
   private readonly orderState = signal<StoreOrder[]>([]);
   private readonly requestState = signal<ProductRequest[]>([]);
@@ -67,6 +84,15 @@ export class GroceryStoreService {
     this.categoryState()
       .filter((category) => category.active)
       .map((category) => category.name),
+  );
+  readonly activeCategoryGroups = computed(() =>
+    CATEGORY_DEPARTMENTS.map((department) => ({
+      name: department.name,
+      categories: this.categoryState().filter(
+        (category) =>
+          category.active && category.department === department.name,
+      ),
+    })).filter((department) => department.categories.length > 0),
   );
   readonly cartItems = computed<DetailedCartItem[]>(() =>
     this.cartState()
@@ -261,10 +287,21 @@ export class GroceryStoreService {
     );
   }
 
-  addCategory(name: string): CategoryMutationResult {
+  addCategory(
+    name: string,
+    department: string,
+    description = '',
+  ): CategoryMutationResult {
     const normalizedName = this.normalizeCategoryName(name);
     if (!normalizedName) {
       return 'invalid-name';
+    }
+    if (!CATEGORY_DEPARTMENTS.some((item) => item.name === department)) {
+      return 'invalid-department';
+    }
+    const normalizedDescription = description.trim();
+    if (normalizedDescription.length > 160) {
+      return 'invalid-description';
     }
     if (this.hasCategoryName(normalizedName)) {
       return 'duplicate';
@@ -272,9 +309,21 @@ export class GroceryStoreService {
 
     this.categoryState.update((categories) => [
       ...categories,
-      { name: normalizedName, active: true },
+      {
+        name: normalizedName,
+        department,
+        description: normalizedDescription,
+        active: true,
+      },
     ]);
     return 'success';
+  }
+
+  categoryDepartment(name: string): string {
+    return (
+      this.categoryState().find((category) => category.name === name)
+        ?.department ?? ''
+    );
   }
 
   renameCategory(
@@ -380,7 +429,10 @@ export class GroceryStoreService {
 
   updateCartQuantity(productId: string, quantity: number): boolean {
     const product = this.productState().find((item) => item.id === productId);
-    if (!product || !Number.isInteger(quantity) || quantity < 0) {
+    const cartItem = this.cartState().find(
+      (item) => item.productId === productId,
+    );
+    if (!product || !cartItem || !Number.isInteger(quantity) || quantity < 0) {
       return false;
     }
 
@@ -449,7 +501,7 @@ export class GroceryStoreService {
       if (!stored) {
         return null;
       }
-      const value: unknown = JSON.parse(stored);
+      const value = this.migrateSnapshot(JSON.parse(stored) as unknown);
       if (!this.isStoreSnapshot(value)) {
         console.warn('Saved demo store data is invalid; using default data.');
         return null;
@@ -500,6 +552,12 @@ export class GroceryStoreService {
           typeof category.name !== 'string' ||
           category.name.trim().length === 0 ||
           category.name.length > 40 ||
+          typeof category.department !== 'string' ||
+          !CATEGORY_DEPARTMENTS.some(
+            (department) => department.name === category.department,
+          ) ||
+          typeof category.description !== 'string' ||
+          category.description.length > 160 ||
           typeof category.active !== 'boolean'
         ) {
           return false;
@@ -662,6 +720,128 @@ export class GroceryStoreService {
 
   private isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null;
+  }
+
+  private migrateSnapshot(value: unknown): unknown {
+    if (!this.isRecord(value) || !Array.isArray(value['categories'])) {
+      return value;
+    }
+
+    const categories = new Map<string, GroceryCategory>();
+    const categoryNames = new Map<string, string>();
+
+    for (const savedCategory of value['categories']) {
+      if (!this.isRecord(savedCategory) || typeof savedCategory['name'] !== 'string') {
+        continue;
+      }
+      const oldName = savedCategory['name'];
+      const name = LEGACY_CATEGORY_NAMES[oldName] ?? oldName;
+      categoryNames.set(oldName, name);
+      const defaultCategory = DEFAULT_CATEGORIES.find(
+        (category) => category.name === name,
+      );
+      const department =
+        typeof savedCategory['department'] === 'string' &&
+        CATEGORY_DEPARTMENTS.some(
+          (item) => item.name === savedCategory['department'],
+        )
+          ? savedCategory['department']
+          : defaultCategory?.department ?? 'Other Essentials';
+      categories.set(name, {
+        name,
+        department,
+        description:
+          typeof savedCategory['description'] === 'string'
+            ? savedCategory['description'].slice(0, 160)
+            : defaultCategory?.description ?? '',
+        active:
+          typeof savedCategory['active'] === 'boolean'
+            ? savedCategory['active']
+            : true,
+      });
+    }
+
+    for (const category of DEFAULT_CATEGORIES) {
+      if (!categories.has(category.name)) {
+        categories.set(category.name, category);
+      }
+    }
+
+    const renamedCategory = (category: unknown): unknown =>
+      typeof category === 'string'
+        ? categoryNames.get(category) ??
+          LEGACY_CATEGORY_NAMES[category] ??
+          category
+        : category;
+    const migrateProductCategory = (category: unknown): unknown => {
+      const name = renamedCategory(category);
+      if (typeof name !== 'string') {
+        return name;
+      }
+      if (!categories.has(name)) {
+        categories.set(name, {
+          name,
+          department: 'Other Essentials',
+          description: '',
+          active: true,
+        });
+      }
+      return name;
+    };
+
+    const products = Array.isArray(value['products'])
+      ? value['products'].map((product) =>
+          this.isRecord(product)
+            ? {
+                ...product,
+                category: migrateProductCategory(product['category']),
+              }
+            : product,
+        )
+      : value['products'];
+    const units = Array.isArray(value['units']) ? [...value['units']] : [];
+    const knownUnits = new Set(
+      units
+        .filter((unit): unit is string => typeof unit === 'string')
+        .map((unit) => unit.toLocaleLowerCase()),
+    );
+    if (Array.isArray(products)) {
+      for (const product of products) {
+        if (
+          this.isRecord(product) &&
+          typeof product['unit'] === 'string' &&
+          !knownUnits.has(product['unit'].toLocaleLowerCase())
+        ) {
+          units.push(product['unit']);
+          knownUnits.add(product['unit'].toLocaleLowerCase());
+        }
+      }
+    }
+    const orders = Array.isArray(value['orders'])
+      ? value['orders'].map((order) =>
+          this.isRecord(order) && Array.isArray(order['items'])
+            ? {
+                ...order,
+                items: order['items'].map((item) =>
+                  this.isRecord(item)
+                    ? {
+                        ...item,
+                        category: renamedCategory(item['category']),
+                      }
+                    : item,
+                ),
+              }
+            : order,
+        )
+      : value['orders'];
+
+    return {
+      ...value,
+      categories: [...categories.values()],
+      products,
+      units,
+      orders,
+    };
   }
 
   private isFiniteNumber(value: unknown): value is number {

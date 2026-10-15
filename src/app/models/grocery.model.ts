@@ -1,15 +1,9 @@
-export const CATEGORIES = [
-  'Fruits & Vegetables',
-  'Dairy & Eggs',
-  'Bakery & Snacks',
-  'Beverages',
-  'Household Essentials',
-] as const;
-
 export type ProductCategory = string;
 
 export interface GroceryCategory {
   name: ProductCategory;
+  department: string;
+  description: string;
   active: boolean;
 }
 

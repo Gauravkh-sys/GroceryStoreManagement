@@ -5,7 +5,7 @@
   />
 } 
 @else {
-<div class="min-h-screen min-w-0 bg-[#fafbf8] text-[#293526]" [attr.lang]="language.current()">
+<div class="app-shell min-h-screen min-w-0 bg-[#fafbf8] text-[#293526]" [attr.lang]="language.current()">
   <header class="sticky top-0 z-30 border-b border-[#edf0e8] bg-white/95 backdrop-blur">
     <div class="mx-auto flex min-h-[64px] max-w-[1440px] items-center justify-between gap-2 px-3 py-2 sm:h-[72px] sm:flex-nowrap sm:gap-4 sm:px-7 sm:py-0 lg:px-10">
       <button type="button" class="flex min-w-0 flex-1 items-center gap-2 rounded-lg text-left focus:outline-none focus:ring-2 focus:ring-[#31723b] sm:flex-none sm:gap-2.5" [attr.aria-label]="language.text('Durvijay General Store home')" (click)="activeView.set('shop')">
@@ -119,11 +119,19 @@
           </label>
         </div>
 
-        <div class="mb-5 -mx-3 flex gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:mb-6 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0" role="group" [attr.aria-label]="language.text('Filter products by category')">
-          @for (category of categories(); track category) {
-            <button type="button" class="shrink-0 rounded-full border px-4 py-2 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#31723b] focus:ring-offset-1" [class]="selectedCategory() === category ? 'border-[#31723b] bg-[#31723b] text-white shadow-sm' : 'border-[#e7eae2] bg-white text-[#65705d] hover:border-[#bfd0b4] hover:bg-[#f7f9f4]'" [attr.aria-pressed]="selectedCategory() === category" (click)="selectCategory(category)">{{ language.category(category) }}</button>
+        <div class="mb-3 -mx-3 flex gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0" role="group" [attr.aria-label]="language.text('Filter products by department')">
+          @for (department of departmentFilters(); track department) {
+            <button type="button" class="shrink-0 rounded-full border px-4 py-2 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#31723b] focus:ring-offset-1" [class]="selectedDepartment() === department ? 'border-[#31723b] bg-[#31723b] text-white shadow-sm' : 'border-[#e7eae2] bg-white text-[#65705d] hover:border-[#bfd0b4] hover:bg-[#f7f9f4]'" [attr.aria-pressed]="selectedDepartment() === department" (click)="selectDepartment(department)">{{ language.text(department) }}</button>
           }
         </div>
+        <div class="mb-2 -mx-3 flex gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0" role="group" [attr.aria-label]="language.text('Filter products by subcategory')">
+          @for (category of subcategoryFilters(); track category) {
+            <button type="button" class="shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#31723b] focus:ring-offset-1" [class]="selectedCategory() === category ? 'border-[#73956a] bg-[#eef4e9] text-[#2d5732]' : 'border-[#e7eae2] bg-white text-[#65705d] hover:border-[#bfd0b4] hover:bg-[#f7f9f4]'" [attr.aria-pressed]="selectedCategory() === category" (click)="selectCategory(category)">{{ category === 'All' ? language.text('All subcategories') : language.category(category) }}</button>
+          }
+        </div>
+        @if (selectedCategoryDescription()) {
+          <p class="mb-5 text-xs text-stone-500">{{ language.text(selectedCategoryDescription()) }}</p>
+        }
 
         @if (filteredProducts().length > 0) {
           <div class="product-grid grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
@@ -136,7 +144,7 @@
             <span class="text-4xl" aria-hidden="true">🔎</span>
             <h3 class="mt-3 font-semibold text-[#34412f]">{{ language.text('Nothing on the shelf') }}</h3>
             <p class="mt-1 text-sm text-stone-500">{{ language.text('Try a different search or category.') }}</p>
-            <button type="button" class="mt-4 text-sm font-semibold text-[#31723b] underline underline-offset-4" (click)="searchControl.setValue(''); selectCategory('All')">{{ language.text('Clear filters') }}</button>
+            <button type="button" class="mt-4 text-sm font-semibold text-[#31723b] underline underline-offset-4" (click)="searchControl.setValue(''); clearCategoryFilters()">{{ language.text('Clear filters') }}</button>
           </div>
         }
       </section>
@@ -276,42 +284,54 @@
 
   @if (selectedBill(); as bill) {
     <div class="bill-overlay fixed inset-0 z-[70] overflow-y-auto bg-black/50 p-3 sm:p-8" role="dialog" aria-modal="true" aria-labelledby="bill-title">
-      <div id="bill-document" class="mx-auto my-2 w-full max-w-2xl rounded-2xl bg-white p-5 text-slate-900 shadow-2xl sm:my-8 sm:p-10">
-        <div class="no-print mb-6 flex flex-wrap justify-end gap-2">
+      <div id="bill-document" class="mx-auto my-2 w-full max-w-3xl rounded-xl bg-white p-5 text-slate-900 shadow-2xl sm:my-8 sm:p-8">
+        <div class="no-print mb-4 flex flex-wrap justify-end gap-2">
           <button type="button" class="rounded-lg border border-stone-200 px-4 py-2 text-sm font-semibold" (click)="selectedBill.set(null)">{{ language.text('Close') }}</button>
           <button type="button" class="rounded-lg bg-[#31723b] px-4 py-2 text-sm font-semibold text-white" (click)="printBill()">{{ language.text('Download / print PDF') }}</button>
         </div>
-        <header class="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-5">
+        <header class="bill-header flex flex-wrap items-start justify-between gap-3 border-b-2 border-[#159447] pb-4">
           <div>
-            <p class="text-xs font-bold uppercase tracking-[0.18em] text-[#31723b]">{{ language.text('Tax invoice / bill') }}</p>
-            <h2 id="bill-title" class="mt-2 text-2xl font-bold">{{ language.text('Durvijay General Store') }}</h2>
-            <p class="mt-1 text-sm text-slate-600">{{ language.text('Demo bill — not a tax invoice') }}</p>
+            <h2 id="bill-title" class="text-xl font-bold text-[#13813c] sm:text-2xl">{{ language.text('Durvijay General Store') }}</h2>
+            <p class="mt-1 text-[10px] text-slate-500">{{ language.text('Neighbourhood grocery store') }}</p>
+            <p class="text-[10px] text-slate-500">{{ language.text('Store contact') }}: +91 87565 87920</p>
           </div>
-          <div class="text-right text-sm">
-            <p class="font-semibold">{{ language.text('Order ID') }}: {{ bill.id }}</p>
-            <p class="mt-1 text-slate-600">{{ bill.createdAt | date:'medium' }}</p>
+          <div class="text-left text-xs sm:text-right">
+            <p class="font-bold uppercase tracking-wide text-slate-800">{{ language.text('Order invoice') }}</p>
+            <p class="mt-1"><span class="font-semibold">{{ language.text('Order ID') }}:</span> {{ bill.id }}</p>
+            <p class="mt-0.5"><span class="font-semibold">{{ language.text('Date') }}:</span> {{ bill.createdAt | date:'medium' }}</p>
+            <p class="mt-1 inline-flex rounded bg-emerald-100 px-2 py-0.5 font-semibold text-emerald-800">{{ language.text(bill.status) }}</p>
           </div>
         </header>
-        <div class="my-5 grid gap-1 text-sm">
-          <p><span class="font-semibold">{{ language.text('Customer') }}:</span> {{ bill.customerName }}</p>
-          <p><span class="font-semibold">{{ language.text('Mobile number') }}:</span> {{ bill.customerMobile }}</p>
+        <div class="bill-info-grid my-3 grid gap-2 sm:grid-cols-2">
+          <section class="rounded border border-slate-200 bg-slate-50 p-3" aria-labelledby="bill-customer-heading">
+            <h3 id="bill-customer-heading" class="border-b border-slate-300 pb-1 text-[10px] font-bold uppercase tracking-wide text-[#13813c]">{{ language.text('Customer information') }}</h3>
+            <p class="mt-2 text-[11px]"><span class="font-semibold">{{ language.text('Customer') }}:</span> {{ bill.customerName }}</p>
+            <p class="mt-1 text-[11px]"><span class="font-semibold">{{ language.text('Mobile number') }}:</span> {{ bill.customerMobile }}</p>
+          </section>
+          <section class="rounded border border-slate-200 bg-slate-50 p-3" aria-labelledby="bill-order-heading">
+            <h3 id="bill-order-heading" class="border-b border-slate-300 pb-1 text-[10px] font-bold uppercase tracking-wide text-[#13813c]">{{ language.text('Order details') }}</h3>
+            <p class="mt-2 text-[11px]"><span class="font-semibold">{{ language.text('Fulfillment') }}:</span> {{ language.text('Not specified') }}</p>
+            <p class="mt-1 text-[11px]"><span class="font-semibold">{{ language.text('Payment method') }}:</span> {{ language.text('Not recorded') }}</p>
+          </section>
         </div>
+        <h3 class="mb-1.5 text-xs font-bold text-slate-800">{{ language.text('Ordered items summary') }}</h3>
         <div class="overflow-x-auto">
-          <table class="w-full min-w-[500px] text-left text-sm">
-            <thead><tr class="border-y border-slate-200 text-xs uppercase text-slate-500"><th class="py-3 pr-3">{{ language.text('Product') }}</th><th class="px-2 py-3 text-right">{{ language.text('Qty') }}</th><th class="px-2 py-3 text-right">{{ language.text('Price') }}</th><th class="py-3 pl-2 text-right">{{ language.text('Amount') }}</th></tr></thead>
+          <table class="bill-items-table w-full min-w-[430px] table-fixed text-left text-[11px]">
+            <colgroup><col class="w-[9%]" /><col class="w-[43%]" /><col class="w-[18%]" /><col class="w-[15%]" /><col class="w-[15%]" /></colgroup>
+            <thead><tr class="bg-[#159447] text-[10px] font-bold text-white"><th class="px-2 py-2">{{ language.text('Item #') }}</th><th class="px-2 py-2">{{ language.text('Product description') }}</th><th class="px-2 py-2 text-right">{{ language.text('Qty / Unit') }}</th><th class="px-2 py-2 text-right">{{ language.text('Price') }}</th><th class="px-2 py-2 text-right">{{ language.text('Amount') }}</th></tr></thead>
             <tbody>
-              @for (item of bill.items; track item.productId) {
-                <tr class="border-b border-slate-100"><td class="py-3 pr-3">{{ item.icon }} {{ item.name }} <span class="text-slate-500">/ {{ item.unit }}</span></td><td class="px-2 py-3 text-right">{{ item.quantity }}</td><td class="px-2 py-3 text-right">{{ item.unitPrice | currency:'INR':'symbol':'1.2-2':language.locale() }}</td><td class="py-3 pl-2 text-right">{{ item.lineTotal | currency:'INR':'symbol':'1.2-2':language.locale() }}</td></tr>
+              @for (item of bill.items; track item.productId; let index = $index) {
+                <tr class="border-b border-slate-200 even:bg-slate-50"><td class="px-2 py-2 text-slate-500">{{ index + 1 }}</td><td class="break-words px-2 py-2">{{ item.icon }} {{ item.name }}</td><td class="px-2 py-2 text-right">{{ item.quantity }} {{ language.unit(item.unit) }}</td><td class="px-2 py-2 text-right">{{ item.unitPrice | currency:'INR':'symbol':'1.2-2':language.locale() }}</td><td class="px-2 py-2 text-right">{{ item.lineTotal | currency:'INR':'symbol':'1.2-2':language.locale() }}</td></tr>
               }
             </tbody>
           </table>
         </div>
-        <div class="ml-auto mt-5 grid max-w-xs grid-cols-2 gap-x-8 gap-y-2 text-sm">
+        <div class="bill-summary ml-auto mt-2 grid max-w-xs grid-cols-2 gap-x-6 gap-y-1 text-[11px]">
           <span class="text-slate-600">{{ language.text('Subtotal') }}</span><span class="text-right">{{ bill.subtotal | currency:'INR':'symbol':'1.2-2':language.locale() }}</span>
-          <span class="text-slate-600">{{ language.text('Tax (8%)') }}</span><span class="text-right">{{ bill.tax | currency:'INR':'symbol':'1.2-2':language.locale() }}</span>
-          <span class="border-t border-slate-200 pt-2 font-bold">{{ language.text('Total') }}</span><span class="border-t border-slate-200 pt-2 text-right font-bold">{{ bill.total | currency:'INR':'symbol':'1.2-2':language.locale() }}</span>
+          <span class="text-slate-600">{{ language.text('Estimated tax (8%)') }}</span><span class="text-right">{{ bill.tax | currency:'INR':'symbol':'1.2-2':language.locale() }}</span>
+          <span class="border-t border-[#159447] pt-1.5 text-xs font-bold text-slate-900">{{ language.text('Total amount') }}</span><span class="border-t border-[#159447] pt-1.5 text-right text-xs font-bold text-slate-900">{{ bill.total | currency:'INR':'symbol':'1.2-2':language.locale() }}</span>
         </div>
-        <p class="mt-8 border-t border-slate-200 pt-4 text-center text-xs text-slate-500">{{ language.text('Thank you for shopping with us!') }}</p>
+        <p class="bill-footer mt-4 rounded bg-slate-100 px-3 py-2 text-[9px] leading-4 text-slate-600">{{ language.text('Demo receipt only. Fulfillment and payment details are not recorded by this demo.') }} {{ language.text('Thank you for shopping with us!') }}</p>
         <p class="no-print mt-3 text-center text-xs text-slate-500">{{ language.text('Choose “Save as PDF” in your browser print dialog to download this bill.') }}</p>
       </div>
     </div>

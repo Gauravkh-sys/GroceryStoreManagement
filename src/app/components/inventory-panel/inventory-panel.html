@@ -47,7 +47,7 @@
                   </div>
                 </td>
                 <td class="px-4 py-3.5 text-xs text-stone-500" [class.line-through]="!store.isCategoryActive(product.category)">
-                  {{ language.category(product.category) }}
+                  {{ language.text(store.categoryDepartment(product.category)) }} · {{ language.category(product.category) }}
                   @if (!store.isCategoryActive(product.category)) {
                     <span class="sr-only">, {{ language.text('Archived category') }}</span>
                   }
@@ -98,8 +98,12 @@
           {{ language.text('Category') }}
           <select class="form-field mt-1.5" formControlName="category">
             <option value="" disabled>{{ language.text('Select a category') }}</option>
-            @for (category of categories(); track category) {
-              <option [value]="category">{{ language.category(category) }}</option>
+            @for (department of categoryGroups(); track department.name) {
+              <optgroup [label]="language.text(department.name)">
+                @for (category of department.categories; track category.name) {
+                  <option [value]="category.name">{{ language.category(category.name) }}</option>
+                }
+              </optgroup>
             }
           </select>
         </label>
