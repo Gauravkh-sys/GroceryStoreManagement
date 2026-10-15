@@ -59,8 +59,10 @@ export class StoreApiService {
     return this.http.get<GroceryCategory[]>('/api/categories');
   }
 
-  addCategory(name: string): Observable<GroceryCategory> {
-    return this.http.post<GroceryCategory>('/api/categories', { name });
+  addCategory(
+    category: Pick<GroceryCategory, 'name' | 'department' | 'description'>,
+  ): Observable<GroceryCategory> {
+    return this.http.post<GroceryCategory>('/api/categories', category);
   }
 
   updateCategory(

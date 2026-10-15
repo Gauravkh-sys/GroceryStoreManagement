@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { CATEGORY_DEPARTMENTS } from '../../data/category-data';
 import {
   CategoryMutationResult,
   GroceryStoreService,
@@ -18,8 +19,20 @@ export class CategoryMasterComponent {
   readonly activeCategories = computed(() =>
     this.store.categories().filter((category) => category.active),
   );
+  readonly activeCategoryGroups = this.store.activeCategoryGroups;
   readonly archivedCategories = computed(() =>
     this.store.categories().filter((category) => !category.active),
+  );
+  readonly archivedCategoryGroups = computed(() =>
+    CATEGORY_DEPARTMENTS.map((department) => ({
+      name: department.name,
+      categories: this.archivedCategories().filter(
+        (category) => category.department === department.name,
+      ),
+    })).filter((department) => department.categories.length > 0),
+  );
+  readonly departments = CATEGORY_DEPARTMENTS.map(
+    (department) => department.name,
   );
   readonly editingCategory = signal<string | null>(null);
   readonly formError = signal<string | null>(null);
@@ -27,6 +40,8 @@ export class CategoryMasterComponent {
 
   readonly addForm = this.formBuilder.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(40)]],
+    department: ['Grocery & Kitchen', Validators.required],
+    description: ['', Validators.maxLength(160)],
   });
   readonly renameForm = this.formBuilder.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(40)]],
@@ -44,13 +59,21 @@ export class CategoryMasterComponent {
       return;
     }
 
-    const result = this.store.addCategory(this.addForm.controls.name.value);
+    const result = this.store.addCategory(
+      this.addForm.controls.name.value,
+      this.addForm.controls.department.value,
+      this.addForm.controls.description.value,
+    );
     if (result !== 'success') {
       this.showError(result);
       return;
     }
 
-    this.addForm.reset({ name: '' });
+    this.addForm.reset({
+      name: '',
+      department: 'Grocery & Kitchen',
+      description: '',
+    });
     this.formError.set(null);
     this.statusMessage.set('Category added.');
   }
@@ -113,6 +136,8 @@ export class CategoryMasterComponent {
     const messages: Record<Exclude<CategoryMutationResult, 'success'>, string> =
       {
         'invalid-name': 'Enter a category name with 1 to 40 characters.',
+        'invalid-department': 'Choose a valid department.',
+        'invalid-description': 'Keep the description to 160 characters or fewer.',
         duplicate: 'A category with that name already exists.',
         'not-found': 'That category no longer exists. Refresh and try again.',
         'already-archived': 'That category is already archived.',

@@ -4,7 +4,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'bananas',
     name: 'Fresh Organic Bananas',
-    category: 'Fruits & Vegetables',
+    category: 'Vegetables & Fruits',
     price: 2.99,
     stock: 45,
     icon: '🍌',
@@ -13,7 +13,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'milk',
     name: 'Whole Milk 1L',
-    category: 'Dairy & Eggs',
+    category: 'Dairy, Bread & Eggs',
     price: 1.49,
     stock: 30,
     icon: '🥛',
@@ -22,7 +22,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'bread',
     name: 'Whole Wheat Bread',
-    category: 'Bakery & Snacks',
+    category: 'Bakery & Biscuits',
     price: 2.49,
     stock: 20,
     icon: '🍞',
@@ -31,7 +31,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'avocados',
     name: 'Hass Avocados',
-    category: 'Fruits & Vegetables',
+    category: 'Vegetables & Fruits',
     price: 4.99,
     stock: 15,
     icon: '🥑',
@@ -40,7 +40,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'yogurt',
     name: 'Greek Yogurt',
-    category: 'Dairy & Eggs',
+    category: 'Dairy, Bread & Eggs',
     price: 3.29,
     stock: 25,
     icon: '🥣',
@@ -49,7 +49,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'juice',
     name: 'Orange Juice 1L',
-    category: 'Beverages',
+    category: 'Drinks & Juices',
     price: 3.99,
     stock: 18,
     icon: '🍊',
@@ -58,7 +58,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'eggs',
     name: 'Free-Range Eggs 12pk',
-    category: 'Dairy & Eggs',
+    category: 'Dairy, Bread & Eggs',
     price: 4.5,
     stock: 12,
     icon: '🥚',
@@ -67,7 +67,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'spinach',
     name: 'Organic Spinach',
-    category: 'Fruits & Vegetables',
+    category: 'Vegetables & Fruits',
     price: 2.19,
     stock: 22,
     icon: '🥬',
@@ -76,7 +76,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'coffee',
     name: 'Ground Coffee',
-    category: 'Beverages',
+    category: 'Tea, Coffee & Milk Drinks',
     price: 8.49,
     stock: 9,
     icon: '☕',
@@ -85,7 +85,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'dish-soap',
     name: 'Plant-Based Dish Soap',
-    category: 'Household Essentials',
+    category: 'Home & Lifestyle',
     price: 3.79,
     stock: 14,
     icon: '🧴',

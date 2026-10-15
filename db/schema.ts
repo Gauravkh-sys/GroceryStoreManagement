@@ -16,6 +16,8 @@ const money = (name: string) => numeric(name, { precision: 10, scale: 2 });
 export const categories = pgTable('categories', {
   id: serial().primaryKey(),
   name: text().notNull().unique(),
+  department: text().notNull().default('Other Essentials'),
+  description: text().notNull().default(''),
   active: boolean().notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });

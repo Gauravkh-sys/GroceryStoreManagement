@@ -24,15 +24,16 @@ Angular UI ──HttpClient──▶ /api/* (netlify/functions) ──Drizzle─
 
 | Table | Key columns | Notes |
 | --- | --- | --- |
-| `categories` | `name` (unique), `active` | Archived categories are `active = false`. Renaming one also renames it on every product (`ON UPDATE CASCADE`). |
+| `categories` | `name` (unique), `department`, `description`, `active` | `department` is the top-level aisle; `name` is the product subcategory. Archived categories are `active = false`. Renaming one also renames it on every product (`ON UPDATE CASCADE`). |
 | `units` | `name` (PK), `built_in` | Built-in units can't be deleted. |
 | `products` | `id`, `name`, `category` → `categories.name`, `price`, `stock`, `icon`, `unit` | `price` is `numeric(10,2)`. |
 | `orders` | `id` (`DGS-…`), customer name/mobile, `subtotal`, `tax`, `total`, `status` | Status is `pending`, `completed` or `cancelled`. |
 | `order_items` | `order_id` → `orders.id`, product snapshot, `unit_price`, `quantity`, `line_total` | Stores a copy of product details, so order history stays correct after a product is edited or deleted. |
 | `product_requests` | `id` (`REQ-…`), `product_name`, `details`, customer, `status` | Status is `pending` or `reviewed`. |
 
-The second migration (`seed_initial_store_data`) adds the same default categories, units and 10 products that
-`src/app/data/grocery-data.ts` ships with today.
+The second migration (`seed_initial_store_data`) adds default categories, units and 10 demo products.
+The `add_category_hierarchy` migration adds department and description metadata, maps the original category
+names onto the new subcategories, and seeds the full department catalog.
 
 ## API reference
 
@@ -47,8 +48,8 @@ from `store-api.service.ts`.
 | `PATCH /api/products/:id` | `{ price?, stock? }` | `Product` | `invalid-product`, `not-found` |
 | `DELETE /api/products/:id` | — | `204` | `not-found` |
 | `GET /api/categories` | — | `GroceryCategory[]` | |
-| `POST /api/categories` | `{ name }` | `201 GroceryCategory` | `invalid-name`, `duplicate` |
-| `PATCH /api/categories/:name` | `{ name? }` to rename, `{ active: false\|true }` to archive or restore | `GroceryCategory` | `not-found`, `invalid-name`, `duplicate`, `already-archived`, `already-active` |
+| `POST /api/categories` | `{ name, department, description? }` | `201 GroceryCategory` | `invalid-name`, `invalid-department`, `invalid-description`, `duplicate` |
+| `PATCH /api/categories/:name` | `{ name?, department?, description?, active? }` to edit or archive/restore | `GroceryCategory` | `not-found`, `invalid-name`, `invalid-department`, `invalid-description`, `duplicate`, `already-archived`, `already-active` |
 | `GET /api/units` | — | `string[]` | |
 | `POST /api/units` | `{ name }` | `201 string` | `invalid-name`, `duplicate` |
 | `DELETE /api/units/:name` | — | `204` | `not-found`, `in-use` |
@@ -114,8 +115,10 @@ Each mutation method currently returns its result synchronously. Change each one
 same result type. On success, update the local signal from the server response:
 
 ```ts
-addCategory(name: string): Observable<CategoryMutationResult> {
-  return this.api.addCategory(name).pipe(
+addCategory(
+  category: Pick<GroceryCategory, 'name' | 'department' | 'description'>,
+): Observable<CategoryMutationResult> {
+  return this.api.addCategory(category).pipe(
     tap((category) => this.categoryState.update((list) => [...list, category])),
     map((): CategoryMutationResult => 'success'),
     catchError((err) => of((storeApiErrorCode(err) ?? 'invalid-name') as CategoryMutationResult)),
