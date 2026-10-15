@@ -2,7 +2,14 @@ import type { Config, Context } from '@netlify/functions';
 import { asc, eq, ne, and, sql } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 import { categories } from '../../db/schema.js';
-import { error, json, methodNotAllowed, readJson, trimmed } from '../lib/http.js';
+import {
+  error,
+  json,
+  methodNotAllowed,
+  readJson,
+  requireManagerApiToken,
+  trimmed,
+} from '../lib/http.js';
 
 const MAX_NAME_LENGTH = 40;
 
@@ -28,6 +35,8 @@ export default async (req: Request, context: Context) => {
   }
 
   if (req.method === 'POST' && !currentName) {
+    const authError = requireManagerApiToken(req);
+    if (authError) return authError;
     const body = await readJson<{ name: string }>(req);
     const name = trimmed(body?.name);
     if (!name || name.length > MAX_NAME_LENGTH) {
@@ -45,6 +54,8 @@ export default async (req: Request, context: Context) => {
 
   // PATCH /api/categories/:name  { name?: string, active?: boolean }
   if (req.method === 'PATCH' && currentName) {
+    const authError = requireManagerApiToken(req);
+    if (authError) return authError;
     const body = await readJson<{ name: string; active: boolean }>(req);
     const [existing] = await db.select().from(categories).where(eq(categories.name, currentName));
     if (!existing) {

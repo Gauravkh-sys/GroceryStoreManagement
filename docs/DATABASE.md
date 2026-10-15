@@ -1,172 +1,95 @@
 # Database
 
-Durvijay General Store stores its data in **Netlify Database**, a managed Postgres database. The Angular app never
-talks to the database directly. It calls a small REST API (`/api/*`) built with Netlify Functions, and those functions
-read and write the database through Drizzle ORM.
+Durvijay General Store uses Netlify Database (Postgres). The Angular app calls REST endpoints implemented as Netlify
+Functions; it does not connect directly to Postgres.
 
-```
-Angular UI ──HttpClient──▶ /api/* (netlify/functions) ──Drizzle──▶ Netlify Database (Postgres)
+```text
+Angular UI --HttpClient--> /api/* (Netlify Functions) --Drizzle--> Netlify Database
 ```
 
-## What is in the repo
+## Project components
 
 | Path | Purpose |
 | --- | --- |
-| `db/schema.ts` | Table definitions. This is the source of truth for the schema. |
-| `db/index.ts` | Drizzle client. The connection is configured automatically by Netlify. |
-| `drizzle.config.ts` | Drizzle Kit config. Migrations are written to `netlify/database/migrations`. |
-| `netlify/database/migrations/` | SQL migrations. Netlify applies them automatically on every deploy. |
-| `netlify/functions/*.mts` | REST endpoints, one file per resource. |
-| `netlify/lib/http.ts` | Shared response, validation and money helpers for the functions. |
-| `src/app/services/store-api.service.ts` | Typed Angular client for the endpoints. |
+| `db/schema.ts` | Drizzle table definitions. |
+| `db/index.ts` | Drizzle client configured for Netlify Database. |
+| `drizzle.config.ts` | Drizzle Kit configuration. |
+| `netlify/database/migrations/` | SQL migration history. |
+| `netlify/functions/*.mts` | REST endpoints. |
+| `netlify/lib/http.ts` | Shared response, validation, size-limit, and manager-token helpers. |
+| `src/app/services/store-api.service.ts` | Typed Angular API client. |
 
 ## Tables
 
 | Table | Key columns | Notes |
 | --- | --- | --- |
-| `categories` | `name` (unique), `active` | Archived categories are `active = false`. Renaming one also renames it on every product (`ON UPDATE CASCADE`). |
-| `units` | `name` (PK), `built_in` | Built-in units can't be deleted. |
-| `products` | `id`, `name`, `category` → `categories.name`, `price`, `stock`, `icon`, `unit` | `price` is `numeric(10,2)`. |
-| `orders` | `id` (`DGS-…`), customer name/mobile, `subtotal`, `tax`, `total`, `status` | Status is `pending`, `completed` or `cancelled`. |
-| `order_items` | `order_id` → `orders.id`, product snapshot, `unit_price`, `quantity`, `line_total` | Stores a copy of product details, so order history stays correct after a product is edited or deleted. |
-| `product_requests` | `id` (`REQ-…`), `product_name`, `details`, customer, `status` | Status is `pending` or `reviewed`. |
+| `categories` | `name`, `active` | Category names are unique; rename cascades to products. |
+| `units` | `name`, `built_in` | Built-in units cannot be deleted. |
+| `products` | `id`, `name`, `category`, `price`, `stock`, `icon`, `unit` | Price is `numeric(10,2)`. |
+| `orders` | `id`, customer name/mobile, totals, `status` | Order status is pending, completed, or cancelled. |
+| `order_items` | `order_id`, product snapshot, price, quantity, line total | Keeps the purchased item details. |
+| `product_requests` | `id`, product name, details, customer, `status` | Request status is pending or reviewed. |
 
-The second migration (`seed_initial_store_data`) adds the same default categories, units and 10 products that
-`src/app/data/grocery-data.ts` ships with today.
+The initial seed migration inserts default categories, units, and products. Products use `loaf`, `pack of 3`, `tub`,
+and `carton`; those units must exist in the database before the seeded product rows can be inserted.
 
-## API reference
+## API
 
-On failure, every endpoint returns `{ "error": "<code>", "message": "<text>" }`. The `error` codes match the result
-codes the UI already uses (`duplicate`, `invalid-name`, `stock-changed`, …). Read them with `storeApiErrorCode()`
-from `store-api.service.ts`.
+Failures return `{ "error": "<code>", "message": "<text>" }`. The client exposes `storeApiErrorCode()` to read the
+error code.
 
-| Method & path | Body | Success | Error codes |
-| --- | --- | --- | --- |
-| `GET /api/products` | — | `Product[]` | |
-| `POST /api/products` | `Omit<Product,'id'>` | `201 Product` | `invalid-product`, `inactive-category` |
-| `PATCH /api/products/:id` | `{ price?, stock? }` | `Product` | `invalid-product`, `not-found` |
-| `DELETE /api/products/:id` | — | `204` | `not-found` |
-| `GET /api/categories` | — | `GroceryCategory[]` | |
-| `POST /api/categories` | `{ name }` | `201 GroceryCategory` | `invalid-name`, `duplicate` |
-| `PATCH /api/categories/:name` | `{ name? }` to rename, `{ active: false\|true }` to archive or restore | `GroceryCategory` | `not-found`, `invalid-name`, `duplicate`, `already-archived`, `already-active` |
-| `GET /api/units` | — | `string[]` | |
-| `POST /api/units` | `{ name }` | `201 string` | `invalid-name`, `duplicate` |
-| `DELETE /api/units/:name` | — | `204` | `not-found`, `in-use` |
-| `GET /api/orders[?mobile=XXXXXXXXXX]` | — | `StoreOrder[]` (newest first) | |
-| `POST /api/orders` | `{ customerName, customerMobile, items: CartItem[] }` | `201 StoreOrder` | `invalid-customer`, `empty-cart`, `stock-changed` |
-| `PATCH /api/orders/:id` | `{ status: 'completed'\|'cancelled' }` | `StoreOrder` | `invalid-status`, `not-pending` |
-| `GET /api/product-requests` | — | `ProductRequest[]` | |
-| `POST /api/product-requests` | `{ productName, details, customerName, customerMobile }` | `201 ProductRequest` | `invalid-request` |
-| `PATCH /api/product-requests/:id` | `{ status: 'pending'\|'reviewed' }` | `ProductRequest` | `invalid-status`, `not-found` |
+| Method and path | Body | Success |
+| --- | --- | --- |
+| `GET /api/products` | — | Product list |
+| `POST /api/products` | Product fields | `201` and created product |
+| `PATCH /api/products/:id` | `{ price?, stock? }` | Updated product |
+| `DELETE /api/products/:id` | — | `204` |
+| `GET /api/categories` | — | Category list |
+| `POST /api/categories` | `{ name }` | `201` and created category |
+| `PATCH /api/categories/:name` | `{ name? }` or `{ active }` | Updated category |
+| `GET /api/units` | — | Unit list |
+| `POST /api/units` | `{ name }` | `201` and created unit |
+| `DELETE /api/units/:name` | — | `204` |
+| `GET /api/orders?mobile=XXXXXXXXXX` | — | Matching orders |
+| `POST /api/orders` | `{ customerName, customerMobile, items }` | `201` and created order |
+| `PATCH /api/orders/:id` | `{ status: 'completed' \| 'cancelled' }` | Updated order |
+| `GET /api/product-requests` | — | Product request list |
+| `POST /api/product-requests` | `{ productName, details, customerName, customerMobile }` | `201` and created request |
+| `PATCH /api/product-requests/:id` | `{ status: 'pending' \| 'reviewed' }` | Updated request |
 
-`POST /api/orders` runs inside a single transaction. It reads prices from the database rather than trusting the
-client, then lowers stock only where enough is left. If two customers try to buy the last item at the same time, one
-of them gets `stock-changed`. Cancelling a pending order adds its stock back.
+Order creation is transactional: the server reads product prices from the database, reserves available stock, and
+inserts the order and item rows together. A competing order that cannot reserve sufficient stock fails rather than
+overselling.
 
-## Integrating the UI, step by step
+## Current UI integration
 
-`provideHttpClient(withFetch())` is already registered in `app.config.ts`, and `StoreApiService` is ready to inject.
-The components keep reading signals from `GroceryStoreService`. The only change is inside that service: it loads from
-and saves to the API instead of `localStorage`. This means most components need little or no change.
+The customer storefront loads products, categories, and units from the API. Checkout posts the customer and cart
+lines to `POST /api/orders`. The cart is cleared and the bill is shown only after the server confirms the order.
+Product requests are submitted to `POST /api/product-requests`, and the request form resets only after a successful
+response. API failures are shown to the user; failed submissions do not discard the cart or form data.
 
-### Step 1: Load server data in `GroceryStoreService`
+Manager inventory, category and unit editing, order/request management, sales dashboard, login, and basket persistence
+remain browser-local demo features. The UI does not currently use the manager API endpoints. Successful customer
+orders and requests are retained in memory for the current page session, not exposed as persistent order/request
+history in the UI.
 
-1. Inject `StoreApiService`.
-2. In the constructor (browser only), stop restoring `products`, `categories`, `units`, `orders` and `requests` from
-   `localStorage`. Load them from the API instead:
+## Local development and migrations
 
-   ```ts
-   private readonly api = inject(StoreApiService);
-   readonly loading = signal(true);
-   readonly loadError = signal<string | null>(null);
-
-   refresh(): void {
-     forkJoin({
-       products: this.api.getProducts(),
-       categories: this.api.getCategories(),
-       units: this.api.getUnits(),
-       orders: this.api.getOrders(),
-       requests: this.api.getProductRequests(),
-     }).subscribe({
-       next: (data) => {
-         this.productState.set(data.products);
-         this.categoryState.set(data.categories);
-         this.unitState.set(data.units);
-         this.orderState.set(data.orders);
-         this.requestState.set(data.requests);
-         this.loading.set(false);
-       },
-       error: () => {
-         this.loadError.set('Unable to load store data.');
-         this.loading.set(false);
-       },
-     });
-   }
-   ```
-
-3. **Keep the cart in `localStorage`.** It is per-device and doesn't need a server. Reduce `StoreSnapshot` to
-   `{ cart }`.
-4. In `app.html`, show a loading or error state using `store.loading()` and `store.loadError()`.
-
-### Step 2: Make mutations asynchronous
-
-Each mutation method currently returns its result synchronously. Change each one to return an `Observable` of the
-same result type. On success, update the local signal from the server response:
-
-```ts
-addCategory(name: string): Observable<CategoryMutationResult> {
-  return this.api.addCategory(name).pipe(
-    tap((category) => this.categoryState.update((list) => [...list, category])),
-    map((): CategoryMutationResult => 'success'),
-    catchError((err) => of((storeApiErrorCode(err) ?? 'invalid-name') as CategoryMutationResult)),
-  );
-}
-```
-
-Keep the existing client-side validation as a fast first check. The server checks everything again.
-
-### Step 3: Update each screen
-
-| UI | File | Store methods → API | What to change in the component |
-| --- | --- | --- | --- |
-| Storefront & checkout | `app.ts` | `products`, `activeCategories` (loaded in Step 1). `createOrder` → `api.createOrder(name, mobile, cartState())`. | `subscribe` to `createOrder(...)`. On success, prepend the returned order, clear the cart, and call `api.getProducts()` to pick up the new stock. Map `stock-changed` to the existing toast. Disable the checkout button while the request is in flight. |
-| Product card | `product-card.ts` | `isCategoryActive` (local, no change) | None. |
-| Inventory panel | `inventory-panel.ts` | `addProduct` → `api.addProduct`, `deleteProduct` → `api.deleteProduct` | `subscribe`. Set the `unavailable` error on the category control when the code is `inactive-category`. Remove the product from `productState` only after a `204`. |
-| Category master | `category-master.ts` | `addCategory` → `api.addCategory`, `renameCategory` → `api.updateCategory(old, { name })`, `archiveCategory` / `restoreCategory` → `api.updateCategory(name, { active })` | `subscribe` and pass the result into the existing `showError(result)` or success message. After a rename, also rename the category on products locally (or reload products). The database already cascades it. |
-| Unit master | `unit-master.ts` | `addUnit` → `api.addUnit`, `removeUnit` → `api.removeUnit` | `subscribe`. Show the existing messages for `duplicate` / `in-use`. |
-| Product request (customer) | `product-request.ts` | `createProductRequest` → `api.createProductRequest` | `subscribe`. Show the success message only after `201`. |
-| Order management (manager) | `order-management.ts` | `updateOrderStatus` → `api.updateOrderStatus`, `updateProductRequestStatus` → `api.updateProductRequestStatus` | `subscribe` and replace the order or request in its signal with the returned one. After a cancellation, reload products so the restored stock appears. |
-| Sales dashboard | `sales-dashboard.ts` | `orders` (loaded in Step 1) | None. Its `computed` totals keep working on the API data. Optionally call `store.refresh()` when the dashboard opens. |
-| Login screen | `login-screen.ts` | — | None for the database. See "Security" below. |
-| Customer order history (optional) | — | `api.getOrders(mobile)` | Use the signed-in customer's mobile number to list only their orders. |
-
-### Step 4: Remove demo-only code
-
-Once every screen uses the API, delete `INITIAL_PRODUCTS` (the seed migration replaces it), the `isStoreSnapshot` /
-`isStoreOrder` / `isProductRequest` guards, and the old `durvijay-store-demo-v1` key. You can clear the old key once
-with `localStorage.removeItem('durvijay-store-demo-v1')`.
-
-### Step 5: Run locally
+`ng serve` serves only the Angular app and cannot execute Netlify Functions. Configure Netlify Database for the site
+and run the integrated app with:
 
 ```bash
-netlify dev            # serves Angular and the /api/* functions together
+npx netlify dev
 ```
 
-`ng serve` alone doesn't run the functions. Use `netlify dev` while working on the UI.
-
-## Changing the schema
-
-1. Edit `db/schema.ts`.
-2. Run `npx drizzle-kit generate --name <imperative_snake_case_description>` (for example, `add_products_barcode`).
-3. Commit the new folder in `netlify/database/migrations/`. Netlify applies it automatically before the deploy is
-   published. Deploy previews get their own copy of the database branch.
-
-Never edit a migration that has already been deployed. Add a new migration instead.
+Never place database credentials or manager tokens in Angular code or commit them to the repository. For a schema
+change, edit `db/schema.ts`, generate a new migration using `npx drizzle-kit generate --name <description>`, review
+the SQL, and apply it through the configured Netlify Database migration workflow. Never edit a migration that may
+already have been applied.
 
 ## Security
 
-Sign-in is currently a front-end demo: the accounts are hard-coded in `login-screen.ts`. The manager endpoints
-(products, categories, units, order status, request status, and listing all orders) don't check who is calling.
-**Add real authentication before using this with real customers.** Netlify Identity is the simplest option: verify
-the user and their `manager` role in each function that changes data, and restrict `GET /api/orders` without
-`?mobile=` to managers.
+Sign-in remains a front-end demo with hard-coded accounts. Manager-only API operations and reads fail closed unless
+the server-side `STORE_MANAGER_API_TOKEN` is configured and supplied. Do not expose this token to browser code. This
+token check is only a temporary safeguard, not user authentication; implement and verify server-side authentication
+and authorization before connecting manager UI or using real customer data.

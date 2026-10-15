@@ -82,6 +82,15 @@
         {{ language.text('Demo data could not be saved. Changes may be lost after refresh.') }}
       </p>
     }
+    @if (catalogStatus() === 'unavailable') {
+      <p class="mb-5 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950" role="status">
+        {{ language.text('Online catalog unavailable. Showing this browser’s demo catalog instead.') }}
+      </p>
+    } @else if (catalogStatus() === 'database' && currentRole() === 'manager') {
+      <p class="mb-5 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950" role="status">
+        {{ language.text('Catalog is shared from the database. Manager edits and reporting remain browser-only demo data.') }}
+      </p>
+    }
     @if (activeView() === 'shop') {
       <section class="hero-panel relative mb-8 overflow-hidden rounded-[24px] px-6 py-7 sm:mb-9 sm:px-10 sm:py-10 lg:px-14 lg:py-12">
         <div class="relative z-10 max-w-[530px]">
@@ -245,9 +254,9 @@
               @if (isCheckoutMobileInvalid()) {
                 <p class="text-xs text-rose-700" role="alert">{{ language.text('Enter a valid 10-digit mobile number.') }}</p>
               }
-              <p class="text-[10px] leading-4 text-amber-800">{{ language.text('Demo only: order details are saved in this browser, not sent to a live store.') }}</p>
-              <button type="submit" class="flex w-full items-center justify-center gap-2 rounded-xl bg-[#31723b] py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#245e2e] focus:outline-none focus:ring-2 focus:ring-[#31723b] focus:ring-offset-2">
-                {{ language.text('Place order') }} <span aria-hidden="true">→</span>
+              <p class="text-[10px] leading-4 text-amber-800">{{ language.text('Orders are saved in the database and reserve stock. Manager status updates are not connected yet.') }}</p>
+              <button type="submit" [disabled]="isSubmittingOrder()" class="flex w-full items-center justify-center gap-2 rounded-xl bg-[#31723b] py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#245e2e] focus:outline-none focus:ring-2 focus:ring-[#31723b] focus:ring-offset-2 disabled:cursor-wait disabled:opacity-60">
+                {{ language.text(isSubmittingOrder() ? 'Submitting order...' : 'Place order') }} <span aria-hidden="true">→</span>
               </button>
             </form>
             <a

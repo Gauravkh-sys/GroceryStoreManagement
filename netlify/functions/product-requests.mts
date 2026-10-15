@@ -9,6 +9,7 @@ import {
   methodNotAllowed,
   normalizeMobile,
   readJson,
+  requireManagerApiToken,
   trimmed,
 } from '../lib/http.js';
 
@@ -34,6 +35,8 @@ export default async (req: Request, context: Context) => {
   const requestId = context.params['id'] ?? null;
 
   if (req.method === 'GET' && !requestId) {
+    const authError = requireManagerApiToken(req);
+    if (authError) return authError;
     const rows = await db.select().from(productRequests).orderBy(desc(productRequests.createdAt));
     return json(rows.map(toProductRequest));
   }
@@ -66,6 +69,8 @@ export default async (req: Request, context: Context) => {
 
   // PATCH /api/product-requests/:id  { status: 'pending' | 'reviewed' }
   if (req.method === 'PATCH' && requestId) {
+    const authError = requireManagerApiToken(req);
+    if (authError) return authError;
     const body = await readJson<RequestInput>(req);
     if (body?.status !== 'pending' && body?.status !== 'reviewed') {
       return error(400, 'invalid-status', 'Status must be pending or reviewed.');

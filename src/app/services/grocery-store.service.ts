@@ -19,6 +19,8 @@ import {
   StoreOrder,
   OrderStatus,
 } from '../models/grocery.model';
+import { StoreApiService } from './store-api.service';
+import { forkJoin } from 'rxjs';
 
 const DEMO_STORAGE_KEY = 'durvijay-store-demo-v1';
 const INITIAL_UNITS = ['item', 'kg', 'g', 'litre', 'pack', 'bunch', 'dozen', 'bag', 'bottle'];
@@ -48,6 +50,7 @@ export type OrderMutationResult =
 export class GroceryStoreService {
   private readonly document = inject(DOCUMENT);
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly api = inject(StoreApiService);
   private readonly productState = signal<Product[]>(INITIAL_PRODUCTS);
   private readonly cartState = signal<CartItem[]>([]);
   private readonly categoryState = signal<GroceryCategory[]>(
@@ -57,6 +60,9 @@ export class GroceryStoreService {
   private readonly orderState = signal<StoreOrder[]>([]);
   private readonly requestState = signal<ProductRequest[]>([]);
   readonly persistenceError = signal(false);
+  readonly catalogStatus = signal<'loading' | 'database' | 'unavailable'>(
+    'loading',
+  );
 
   readonly products = this.productState.asReadonly();
   readonly categories = this.categoryState.asReadonly();
@@ -106,7 +112,62 @@ export class GroceryStoreService {
         this.requestState.set(snapshot.requests);
       }
       effect(() => this.saveSnapshot());
+      this.refreshDatabaseCatalog();
     }
+  }
+
+  refreshDatabaseCatalog(): void {
+    forkJoin({
+      products: this.api.getProducts(),
+      categories: this.api.getCategories(),
+      units: this.api.getUnits(),
+    }).subscribe({
+      next: ({ products, categories, units }) => {
+        this.productState.set(products);
+        this.categoryState.set(categories);
+        this.unitState.set(units);
+        const availableIds = new Set(products.map((product) => product.id));
+        this.cartState.update((items) =>
+          items.filter((item) => availableIds.has(item.productId)),
+        );
+        this.catalogStatus.set('database');
+      },
+      error: (cause: unknown) => {
+        console.error('Unable to load the database catalog.', cause);
+        this.catalogStatus.set('unavailable');
+      },
+    });
+  }
+
+  refreshProducts(): void {
+    this.api.getProducts().subscribe({
+      next: (products) => {
+        this.productState.set(products);
+        const availableIds = new Set(products.map((product) => product.id));
+        this.cartState.update((items) =>
+          items.filter((item) => availableIds.has(item.productId)),
+        );
+      },
+      error: (cause: unknown) => {
+        console.error('Unable to refresh database inventory.', cause);
+        this.catalogStatus.set('unavailable');
+      },
+    });
+  }
+
+  recordDatabaseOrder(order: StoreOrder): void {
+    this.orderState.update((orders) => [
+      order,
+      ...orders.filter((existing) => existing.id !== order.id),
+    ]);
+    this.cartState.set([]);
+  }
+
+  recordDatabaseRequest(request: ProductRequest): void {
+    this.requestState.update((requests) => [
+      request,
+      ...requests.filter((existing) => existing.id !== request.id),
+    ]);
   }
 
   createOrder(customerName: string, customerMobile: string): OrderMutationResult {
@@ -467,8 +528,10 @@ export class GroceryStoreService {
       categories: this.categoryState(),
       cart: this.cartState(),
       units: this.unitState(),
-      orders: this.orderState(),
-      requests: this.requestState(),
+      orders: this.orderState().filter((order) => order.source !== 'database'),
+      requests: this.requestState().filter(
+        (request) => request.source !== 'database',
+      ),
     };
     try {
       this.document.defaultView?.localStorage.setItem(
