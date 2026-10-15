@@ -203,6 +203,20 @@ html[data-theme="dark"] .hover\:bg-\[\#fbfcf9\]:hover {
   background-color: #222d23;
 }
 
+html[data-theme="dark"] .inventory-panel [class~="text-rose-600"],
+html[data-theme="dark"] .inventory-panel [class~="text-rose-700"] {
+  color: #fda4af;
+}
+
+html[data-theme="dark"] .inventory-panel [class~="text-amber-800"],
+html[data-theme="dark"] .inventory-panel [class~="text-amber-900"] {
+  color: #fcd34d;
+}
+
+html[data-theme="dark"] .inventory-panel [class~="text-emerald-700"] {
+  color: #86efac;
+}
+
 button,
 input,
 select {
