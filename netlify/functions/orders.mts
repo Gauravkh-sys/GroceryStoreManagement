@@ -9,7 +9,6 @@ import {
   methodNotAllowed,
   normalizeMobile,
   readJson,
-  requireManagerApiToken,
   roundMoney,
   toMoney,
   trimmed,
@@ -69,36 +68,19 @@ const createOrder = async (req: Request) => {
   const body = await readJson<OrderInput>(req);
   const customerName = trimmed(body?.customerName);
   const customerMobile = normalizeMobile(body?.customerMobile);
-  if (
-    !customerName ||
-    customerName.length > 60 ||
-    !isValidMobile(customerMobile)
-  ) {
+  if (!customerName || !isValidMobile(customerMobile)) {
     return error(400, 'invalid-customer', 'Enter a name and a 10-digit mobile number.');
   }
 
-  if (!Array.isArray(body?.items) || body.items.length === 0 || body.items.length > 50) {
-    return error(400, 'invalid-cart', 'The order must contain 1-50 valid products.');
-  }
-
+  // Merge duplicate product lines and drop invalid quantities.
   const quantities = new Map<string, number>();
-  for (const item of body.items) {
-    if (
-      !item ||
-      typeof item.productId !== 'string' ||
-      item.productId.length === 0 ||
-      item.productId.length > 100 ||
-      !Number.isInteger(item.quantity) ||
-      item.quantity <= 0 ||
-      item.quantity > 9999
-    ) {
-      return error(400, 'invalid-cart', 'The order contains an invalid product or quantity.');
+  for (const item of Array.isArray(body?.items) ? body.items : []) {
+    if (typeof item?.productId === 'string' && Number.isInteger(item.quantity) && item.quantity > 0) {
+      quantities.set(item.productId, (quantities.get(item.productId) ?? 0) + item.quantity);
     }
-    const quantity = (quantities.get(item.productId) ?? 0) + item.quantity;
-    if (quantity > 9999) {
-      return error(400, 'invalid-cart', 'Product quantity cannot exceed 9999.');
-    }
-    quantities.set(item.productId, quantity);
+  }
+  if (quantities.size === 0) {
+    return error(400, 'empty-cart', 'The cart is empty.');
   }
 
   const orderId = `DGS-${Date.now().toString(36).toUpperCase()}-${crypto.randomUUID().slice(0, 6).toUpperCase()}`;
@@ -208,8 +190,6 @@ export default async (req: Request, context: Context) => {
   const orderId = context.params['id'] ?? null;
 
   if (req.method === 'GET' && !orderId) {
-    const authError = requireManagerApiToken(req);
-    if (authError) return authError;
     const mobile = normalizeMobile(new URL(req.url).searchParams.get('mobile') ?? '');
     return json(await loadOrders(mobile ? { mobile } : undefined));
   }
@@ -217,8 +197,6 @@ export default async (req: Request, context: Context) => {
     return createOrder(req);
   }
   if (req.method === 'PATCH' && orderId) {
-    const authError = requireManagerApiToken(req);
-    if (authError) return authError;
     return updateStatus(req, orderId);
   }
   return methodNotAllowed();

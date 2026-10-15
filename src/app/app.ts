@@ -13,7 +13,6 @@ import { STORE_WHATSAPP_NUMBER } from './config/store-contact';
 import { GroceryStoreService } from './services/grocery-store.service';
 import { LanguageService } from './services/language.service';
 import { ThemeService } from './services/theme.service';
-import { StoreApiService } from './services/store-api.service';
 import { ProductRequestComponent } from './components/product-request/product-request';
 import { UnitMasterComponent } from './components/unit-master/unit-master';
 import { SalesDashboardComponent } from './components/sales-dashboard/sales-dashboard';
@@ -50,7 +49,6 @@ export class App {
   readonly store = inject(GroceryStoreService);
   readonly language = inject(LanguageService);
   readonly theme = inject(ThemeService);
-  readonly storeApi = inject(StoreApiService);
   private readonly document = inject(DOCUMENT);
   readonly categories = computed(() => [
     'All',
@@ -65,8 +63,6 @@ export class App {
   readonly toastMessage = signal<string | null>(null);
   readonly selectedBill = signal<StoreOrder | null>(null);
   readonly persistenceError = this.store.persistenceError;
-  readonly catalogStatus = this.store.catalogStatus;
-  readonly isSubmittingOrder = signal(false);
   readonly checkoutName = new FormControl('', { nonNullable: true });
   readonly checkoutMobile = new FormControl('', { nonNullable: true });
   readonly searchControl = new FormControl('', { nonNullable: true });
@@ -148,9 +144,6 @@ export class App {
   }
 
   placeOrder(): void {
-    if (this.isSubmittingOrder()) {
-      return;
-    }
     const name = this.checkoutName.value.trim();
     const mobile = this.checkoutMobile.value.replace(/\D/g, '');
     if (!name || !/^\d{10}$/.test(mobile)) {
@@ -158,37 +151,19 @@ export class App {
       this.checkoutMobile.markAsTouched();
       return;
     }
-    const items = this.store.cartItems().map(({ productId, quantity }) => ({
-      productId,
-      quantity,
-    }));
-    if (items.length === 0) {
-      this.showToast('Your basket is empty.');
+    const result = this.store.createOrder(name, mobile);
+    if (!result.success) {
+      const message =
+        result.reason === 'stock-changed'
+          ? 'Some products no longer have enough stock. Review your basket.'
+          : 'Unable to place this order. Check the customer details and basket.';
+      this.showToast(message);
       return;
     }
-    this.isSubmittingOrder.set(true);
-    this.storeApi.createOrder(name, mobile, items).subscribe({
-      next: (order) => {
-        const databaseOrder = { ...order, source: 'database' as const };
-        this.store.recordDatabaseOrder(databaseOrder);
-        this.store.refreshProducts();
-        this.currentMobile.set(mobile);
-        this.checkoutName.reset('');
-        this.isCartOpen.set(false);
-        this.selectedBill.set(databaseOrder);
-      },
-      error: (cause: unknown) => {
-        console.error('Unable to save order to the database.', cause);
-        this.showToast(
-          this.storeApi.errorMessage(
-            cause,
-            'Unable to save the order. Your basket is unchanged; please try again.',
-          ),
-        );
-        this.isSubmittingOrder.set(false);
-      },
-      complete: () => this.isSubmittingOrder.set(false),
-    });
+    this.currentMobile.set(mobile);
+    this.checkoutName.reset('');
+    this.isCartOpen.set(false);
+    this.selectedBill.set(result.order);
   }
 
   showBill(order: StoreOrder): void {

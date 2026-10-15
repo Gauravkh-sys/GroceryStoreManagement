@@ -2,14 +2,7 @@ import type { Config, Context } from '@netlify/functions';
 import { asc, eq, sql } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 import { products, units } from '../../db/schema.js';
-import {
-  error,
-  json,
-  methodNotAllowed,
-  readJson,
-  requireManagerApiToken,
-  trimmed,
-} from '../lib/http.js';
+import { error, json, methodNotAllowed, readJson, trimmed } from '../lib/http.js';
 
 export default async (req: Request, context: Context) => {
   const unitName = context.params['name'] ? decodeURIComponent(context.params['name']) : null;
@@ -20,8 +13,6 @@ export default async (req: Request, context: Context) => {
   }
 
   if (req.method === 'POST' && !unitName) {
-    const authError = requireManagerApiToken(req);
-    if (authError) return authError;
     const body = await readJson<{ name: string }>(req);
     const name = trimmed(body?.name).toLocaleLowerCase();
     if (!name || name.length > 24) {
@@ -39,8 +30,6 @@ export default async (req: Request, context: Context) => {
   }
 
   if (req.method === 'DELETE' && unitName) {
-    const authError = requireManagerApiToken(req);
-    if (authError) return authError;
     const [unit] = await db.select().from(units).where(eq(units.name, unitName));
     if (!unit) {
       return error(404, 'not-found', 'Unit not found.');

@@ -11,14 +11,7 @@ npm install
 npm start
 ```
 
-Open the local URL printed by Angular CLI (usually `http://localhost:4200`). This serves the Angular UI only;
-database-backed customer flows require Netlify Functions and are not available through `ng serve` by itself.
-
-To run the UI and Netlify Functions together, configure the site's Netlify Database integration and run:
-
-```bash
-npx netlify dev
-```
+Open the local URL printed by Angular CLI (usually `http://localhost:4200`).
 
 Create an optimized production build with:
 
@@ -41,10 +34,10 @@ command and `dist/GroceryStoreManagement/browser` as the publish directory.
 
 - Search products by name and filter the catalog by category.
 - Add products to the basket, adjust quantities, remove items, and see the subtotal, 8% tax, and total update immediately.
-- Place customer orders through the Netlify API; successful orders are saved with their item rows and stock is reserved transactionally. Print or save the returned itemized bill through the browser's PDF print dialog.
-- Submit product requests through the Netlify API.
+- Place demo orders, track pending/completed/cancelled status, and print or save an itemized bill through the browser's PDF print dialog.
+- Submit product requests for the manager to review.
 - Use the manager dashboard for demo sales and orders; manage inventory, products, categories, and units.
-- Manager operations, sales dashboard, login, and basket persistence remain browser-local demo features. The customer catalog is loaded from the database API, and order/request submissions require Netlify Functions. There is no payment collection or production-ready authentication.
+- All orders, requests, inventory, categories, units, and basket data are stored in browser local storage for this demo. There is no backend synchronization, payment collection, or secure authentication.
 - Prepare an optional itemized order message for WhatsApp to the configured store number in `src/app/config/store-contact.ts`.
 - Choose product icons from a searchable, grouped emoji library for groceries, grains, snacks, cleaning supplies, personal care, and farm essentials, or enter a custom emoji.
 - Switch the interface between English and Hindi. Built-in products and categories and the generated WhatsApp order message follow the selected language; custom names remain as entered.

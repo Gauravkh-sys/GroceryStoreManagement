@@ -26,16 +26,6 @@ export function storeApiErrorCode(response: unknown): string | null {
   return null;
 }
 
-export function storeApiErrorMessage(response: unknown, fallback: string): string {
-  if (response instanceof HttpErrorResponse) {
-    const body = response.error as Partial<StoreApiError> | null;
-    if (typeof body?.message === 'string') {
-      return body.message;
-    }
-  }
-  return fallback;
-}
-
 /**
  * Thin typed client for the Netlify Functions backed by Netlify Database.
  * Each method maps 1:1 to an endpoint; see docs/DATABASE.md for integration steps.
@@ -124,7 +114,7 @@ export class StoreApiService {
   }
 
   createProductRequest(
-    request: Omit<ProductRequest, 'id' | 'createdAt' | 'status' | 'source'>,
+    request: Omit<ProductRequest, 'id' | 'createdAt' | 'status'>,
   ): Observable<ProductRequest> {
     return this.http.post<ProductRequest>('/api/product-requests', request);
   }
@@ -137,15 +127,5 @@ export class StoreApiService {
       `/api/product-requests/${encodeURIComponent(requestId)}`,
       { status },
     );
-  }
-
-  errorMessage(response: unknown, fallback: string): string {
-    if (response instanceof HttpErrorResponse) {
-      const body = response.error as Partial<StoreApiError> | null;
-      if (typeof body?.message === 'string') {
-        return body.message;
-      }
-    }
-    return fallback;
   }
 }

@@ -5,34 +5,9 @@ export const error = (status: number, code: string, message: string) =>
 
 export const methodNotAllowed = () => error(405, 'method-not-allowed', 'Method not allowed');
 
-export function requireManagerApiToken(req: Request): Response | null {
-  const expected = process.env['STORE_MANAGER_API_TOKEN'];
-  if (!expected) {
-    return error(
-      503,
-      'manager-api-disabled',
-      'Manager database operations are disabled until server-side authentication is configured.',
-    );
-  }
-  const authorization = req.headers.get('authorization') ?? '';
-  const supplied = authorization.startsWith('Bearer ')
-    ? authorization.slice('Bearer '.length)
-    : '';
-  return supplied === expected
-    ? null
-    : error(401, 'unauthorized', 'Manager authorization is required.');
-}
-
-export async function readJson<T>(
-  req: Request,
-  maxBytes = 16_384,
-): Promise<Partial<T> | null> {
+export async function readJson<T>(req: Request): Promise<Partial<T> | null> {
   try {
-    const text = await req.text();
-    if (new TextEncoder().encode(text).byteLength > maxBytes) {
-      return null;
-    }
-    const body: unknown = JSON.parse(text);
+    const body: unknown = await req.json();
     return typeof body === 'object' && body !== null ? (body as Partial<T>) : null;
   } catch {
     return null;

@@ -56,7 +56,6 @@ export interface StoreOrder {
   tax: number;
   total: number;
   status: OrderStatus;
-  source?: 'database';
 }
 
 export type ProductRequestStatus = 'pending' | 'reviewed';
@@ -69,5 +68,4 @@ export interface ProductRequest {
   customerName: string;
   customerMobile: string;
   status: ProductRequestStatus;
-  source?: 'database';
 }
