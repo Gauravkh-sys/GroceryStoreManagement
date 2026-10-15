@@ -30,8 +30,9 @@ Angular UI --HttpClient--> /api/* (Netlify Functions) --Drizzle--> Netlify Datab
 | `order_items` | `order_id`, product snapshot, price, quantity, line total | Keeps the purchased item details. |
 | `product_requests` | `id`, product name, details, customer, `status` | Request status is pending or reviewed. |
 
-The initial seed migration inserts default categories, units, and products. Products use `loaf`, `pack of 3`, `tub`,
-and `carton`; those units must exist in the database before the seeded product rows can be inserted.
+The initial seed migration inserts default categories, units, and products. An additive migration also seeds
+`loaf`, `pack of 3`, `tub`, and `carton`, which are used by the initial products and must be present for product
+creation validation.
 
 ## API
 
