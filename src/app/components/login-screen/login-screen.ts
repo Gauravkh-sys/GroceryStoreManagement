@@ -7,6 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { GroceryStoreService } from '../../services/grocery-store.service';
 import { LanguageService } from '../../services/language.service';
 import { ThemeService } from '../../services/theme.service';
 
@@ -28,8 +29,9 @@ const DEMO_ACCOUNTS: Readonly<
 export class LoginScreenComponent {
   readonly language = inject(LanguageService);
   readonly theme = inject(ThemeService);
+  readonly store = inject(GroceryStoreService);
   readonly browseStore = output<void>();
-  readonly signedIn = output<{ role: LoginRole; mobile: string }>();
+  readonly signedIn = output<{ role: LoginRole; mobile: string; name: string }>();
   readonly role = signal<LoginRole>('customer');
   readonly demoMobile = computed(() => DEMO_ACCOUNTS[this.role()].mobile);
   readonly statusMessage = signal('');
@@ -61,16 +63,25 @@ export class LoginScreenComponent {
       return;
     }
 
+    const mobile = this.loginIdentifier.value;
     const account = DEMO_ACCOUNTS[this.role()];
-    if (
-      this.loginIdentifier.value !== account.mobile ||
-      this.password.value !== account.password
-    ) {
+    const customerAccount =
+      this.role() === 'customer' ? this.store.getCustomerAccount(mobile) : undefined;
+    const isDemoAccount =
+      mobile === account.mobile && this.password.value === account.password;
+    const isRegisteredCustomer =
+      customerAccount !== undefined && this.password.value === mobile;
+
+    if (!isDemoAccount && !isRegisteredCustomer) {
       this.statusMessage.set('Mobile number or password is incorrect.');
       return;
     }
 
     this.statusMessage.set('Demo sign-in successful.');
-    this.signedIn.emit({ role: this.role(), mobile: account.mobile });
+    this.signedIn.emit({
+      role: this.role(),
+      mobile,
+      name: customerAccount?.name ?? '',
+    });
   }
 }

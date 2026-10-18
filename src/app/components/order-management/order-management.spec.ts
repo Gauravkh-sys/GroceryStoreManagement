@@ -49,6 +49,20 @@ describe('OrderManagementComponent', () => {
     expect(reorderEmitted).toBe(true);
     expect(store.cartCount()).toBe(order.items[0].quantity);
   });
+
+  it('shows saved customer accounts and their access source to managers', () => {
+    const fixture = TestBed.createComponent(OrderManagementComponent);
+    const store = TestBed.inject(GroceryStoreService);
+    fixture.componentRef.setInput('manager', true);
+    createTestOrder(store);
+    store.createCustomerAccount('Saved Shopper', '1234567890');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Customer accounts');
+    expect(fixture.nativeElement.textContent).toContain('Saved Shopper');
+    expect(fixture.nativeElement.textContent).toContain('1234567890');
+    expect(fixture.nativeElement.textContent).toContain('web');
+  });
 });
 
 function clickButton(root: HTMLElement, label: string): void {

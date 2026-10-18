@@ -72,3 +72,17 @@ export interface ProductRequest {
   customerMobile: string;
   status: ProductRequestStatus;
 }
+
+export type CustomerAccessDevice = 'mobile' | 'web';
+
+export interface CustomerAccessSource {
+  device: CustomerAccessDevice;
+  browser: string;
+}
+
+export interface CustomerAccount {
+  name: string;
+  mobile: string;
+  createdAt: string;
+  source: CustomerAccessSource;
+}

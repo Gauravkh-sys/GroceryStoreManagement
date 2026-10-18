@@ -15,6 +15,8 @@ import {
 } from '../data/category-data';
 import {
   CartItem,
+  CustomerAccount,
+  CustomerAccessSource,
   DetailedCartItem,
   GroceryCategory,
   Product,
@@ -49,6 +51,30 @@ interface StoreSnapshot {
   orders: StoreOrder[];
   requests: ProductRequest[];
   favorites: Record<string, string[]>;
+  customerAccounts: CustomerAccount[];
+}
+
+export function detectCustomerAccessSource(userAgent: string): CustomerAccessSource {
+  const browser = /SamsungBrowser\//i.test(userAgent)
+    ? 'Samsung Internet'
+    : /Edg(?:e|A|iOS)?\//i.test(userAgent)
+      ? 'Microsoft Edge'
+      : /OPR\//i.test(userAgent)
+        ? 'Opera'
+        : /Firefox|FxiOS/i.test(userAgent)
+          ? 'Firefox'
+          : /CriOS|Chrome/i.test(userAgent)
+            ? 'Chrome'
+            : /Safari/i.test(userAgent)
+              ? 'Safari'
+              : 'Other';
+
+  return {
+    device: /Android|iPhone|iPad|iPod|Mobile|Windows Phone/i.test(userAgent)
+      ? 'mobile'
+      : 'web',
+    browser,
+  };
 }
 
 export type CategoryMutationResult =
@@ -78,6 +104,7 @@ export class GroceryStoreService {
   private readonly orderState = signal<StoreOrder[]>([]);
   private readonly requestState = signal<ProductRequest[]>([]);
   private readonly favoriteState = signal<Record<string, string[]>>({});
+  private readonly customerAccountState = signal<CustomerAccount[]>([]);
   readonly persistenceError = signal(false);
 
   readonly products = this.productState.asReadonly();
@@ -85,6 +112,7 @@ export class GroceryStoreService {
   readonly units = this.unitState.asReadonly();
   readonly orders = this.orderState.asReadonly();
   readonly productRequests = this.requestState.asReadonly();
+  readonly customerAccounts = this.customerAccountState.asReadonly();
   readonly activeCategories = computed(() =>
     this.categoryState()
       .filter((category) => category.active)
@@ -136,9 +164,47 @@ export class GroceryStoreService {
         this.orderState.set(snapshot.orders);
         this.requestState.set(snapshot.requests);
         this.favoriteState.set(snapshot.favorites);
+        this.customerAccountState.set(snapshot.customerAccounts);
       }
       effect(() => this.saveSnapshot());
     }
+  }
+
+  getCustomerAccount(customerMobile: string): CustomerAccount | undefined {
+    const mobile = customerMobile.replace(/\D/g, '');
+    return this.customerAccountState().find((account) => account.mobile === mobile);
+  }
+
+  createCustomerAccount(
+    customerName: string,
+    customerMobile: string,
+  ): { account: CustomerAccount; created: boolean } | null {
+    const name = customerName.trim();
+    const mobile = customerMobile.replace(/\D/g, '');
+    if (!name || name.length > 60 || !/^\d{10}$/.test(mobile)) {
+      return null;
+    }
+
+    const existing = this.getCustomerAccount(mobile);
+    if (existing) {
+      return { account: existing, created: false };
+    }
+    if (
+      !this.orderState().some((order) => order.customerMobile === mobile)
+    ) {
+      return null;
+    }
+
+    const account: CustomerAccount = {
+      name,
+      mobile,
+      createdAt: new Date().toISOString(),
+      source: detectCustomerAccessSource(
+        this.document.defaultView?.navigator.userAgent ?? '',
+      ),
+    };
+    this.customerAccountState.update((accounts) => [account, ...accounts]);
+    return { account, created: true };
   }
 
   createOrder(
@@ -153,6 +219,7 @@ export class GroceryStoreService {
 
     if (
       !name ||
+      name.length > 60 ||
       !/^\d{10}$/.test(mobile) ||
       !['pickup', 'delivery'].includes(fulfillmentMethod) ||
       (fulfillmentMethod === 'delivery' &&
@@ -655,6 +722,7 @@ export class GroceryStoreService {
       orders: this.orderState(),
       requests: this.requestState(),
       favorites: this.favoriteState(),
+      customerAccounts: this.customerAccountState(),
     };
     try {
       this.document.defaultView?.localStorage.setItem(
@@ -777,6 +845,12 @@ export class GroceryStoreService {
       snapshot.orders.every((order) => this.isStoreOrder(order)) &&
       Array.isArray(snapshot.requests) &&
       snapshot.requests.every((request) => this.isProductRequest(request)) &&
+      Array.isArray(snapshot.customerAccounts) &&
+      snapshot.customerAccounts.every((account) =>
+        this.isCustomerAccount(account),
+      ) &&
+      new Set(snapshot.customerAccounts.map((account) => account.mobile)).size ===
+        snapshot.customerAccounts.length &&
       this.isRecord(snapshot.favorites) &&
       Object.entries(snapshot.favorites).every(
         ([mobile, ids]) =>
@@ -863,6 +937,25 @@ export class GroceryStoreService {
       request.customerName.trim().length > 0 &&
       /^\d{10}$/.test(request.customerMobile ?? '') &&
       ['pending', 'reviewed'].includes(request.status ?? '')
+    );
+  }
+
+  private isCustomerAccount(value: unknown): value is CustomerAccount {
+    if (!this.isRecord(value) || !this.isRecord(value['source'])) {
+      return false;
+    }
+    const source = value['source'];
+    return (
+      typeof value['name'] === 'string' &&
+      value['name'].trim().length > 0 &&
+      value['name'].length <= 60 &&
+      typeof value['mobile'] === 'string' &&
+      /^\d{10}$/.test(value['mobile']) &&
+      this.isValidDate(value['createdAt']) &&
+      ['mobile', 'web'].includes(String(source['device'])) &&
+      typeof source['browser'] === 'string' &&
+      source['browser'].length > 0 &&
+      source['browser'].length <= 40
     );
   }
 
@@ -1001,6 +1094,9 @@ export class GroceryStoreService {
       products,
       units,
       orders,
+      customerAccounts: Array.isArray(value['customerAccounts'])
+        ? value['customerAccounts']
+        : [],
       favorites:
         this.isRecord(value['favorites'])
           ? Object.fromEntries(

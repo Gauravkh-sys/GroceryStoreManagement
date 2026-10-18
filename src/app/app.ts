@@ -76,6 +76,7 @@ export class App {
   readonly isCartOpen = signal(false);
   readonly toastMessage = signal<string | null>(null);
   readonly selectedBill = signal<StoreOrder | null>(null);
+  readonly orderAccountNotice = signal('');
   readonly persistenceError = this.store.persistenceError;
   readonly checkoutName = new FormControl('', { nonNullable: true });
   readonly checkoutMobile = new FormControl('', { nonNullable: true });
@@ -226,10 +227,17 @@ export class App {
     this.clearCategoryFilters();
   }
 
-  completeDemoLogin(session: { role: LoginRole; mobile: string }): void {
+  completeDemoLogin(session: {
+    role: LoginRole;
+    mobile: string;
+    name?: string;
+  }): void {
     this.currentRole.set(session.role);
     this.currentMobile.set(session.mobile);
     this.checkoutMobile.setValue(session.mobile);
+    this.checkoutName.setValue(
+      session.name ?? this.store.getCustomerAccount(session.mobile)?.name ?? '',
+    );
     this.activeView.set(session.role === 'manager' ? 'dashboard' : 'shop');
     this.isLoginScreen.set(false);
   }
@@ -249,6 +257,7 @@ export class App {
     const address = this.checkoutAddress.value.trim();
     if (
       !name ||
+      name.length > 60 ||
       !/^\d{10}$/.test(mobile) ||
       (fulfillment === 'delivery' && (!address || address.length > 160))
     ) {
@@ -266,8 +275,19 @@ export class App {
       this.showToast(message);
       return;
     }
+    const accountResult = this.store.createCustomerAccount(name, mobile);
+    this.orderAccountNotice.set(
+      accountResult?.created
+        ? 'A demo customer account was created after your successful order. Sign in with this mobile number and use it as the initial password.'
+        : accountResult
+          ? ''
+          : 'Your order was placed, but the demo customer account could not be created.',
+    );
     this.currentMobile.set(mobile);
-    this.checkoutName.reset('');
+    if (this.currentRole() === 'guest') {
+      this.currentRole.set('customer');
+    }
+    this.checkoutName.setValue(name);
     this.checkoutAddress.reset('');
     this.checkoutFulfillment.reset('pickup');
     this.isCartOpen.set(false);
@@ -275,6 +295,7 @@ export class App {
   }
 
   showBill(order: StoreOrder): void {
+    this.orderAccountNotice.set('');
     this.selectedBill.set(order);
   }
 

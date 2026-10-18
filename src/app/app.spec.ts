@@ -75,10 +75,13 @@ describe('App', () => {
     component.checkoutFulfillment.setValue('delivery');
     component.placeOrder();
     expect(store.orders()).toHaveLength(0);
+    expect(store.getCustomerAccount('1234567890')).toBeUndefined();
     expect(component.checkoutAddress.touched).toBe(true);
 
     component.checkoutAddress.setValue('12 Test Street');
     component.placeOrder();
+    expect(store.getCustomerAccount('1234567890')?.name).toBe('Test shopper');
+    expect(component.orderAccountNotice()).toContain('account was created');
     expect(component.selectedBill()?.fulfillmentMethod).toBe('delivery');
     expect(component.selectedBill()?.deliveryAddress).toBe('12 Test Street');
     expect(component.isCartOpen()).toBe(false);

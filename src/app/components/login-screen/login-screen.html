@@ -141,11 +141,11 @@
           </button>
         </form>
 
-        <p class="login-notice mt-5 rounded-xl px-3.5 py-3 text-xs leading-5">{{ language.text('Demo login only: these credentials are stored in the app and are not secure for production.') }}</p>
+        <p class="login-notice mt-5 rounded-xl px-3.5 py-3 text-xs leading-5">{{ language.text('Demo login only: these credentials are stored in the app and are not secure for production.') }} {{ language.text('A customer account is created after the first successful order. Its initial demo password is the mobile number and account data stays in this browser.') }}</p>
         <p class="mt-3 text-center text-xs leading-5 text-[#65705d]">{{ language.text('Demo credentials: {mobile} (password is the same number)', { mobile: demoMobile() }) }}</p>
         <div class="mt-5 text-center">
           <button type="button" class="rounded-md text-sm font-semibold text-[#397343] underline-offset-4 hover:underline focus:outline-none focus:ring-2 focus:ring-[#31723b]" (click)="browseStore.emit()">{{ language.text('Browse the store without signing in') }}</button>
-          <p class="mt-3 text-xs text-[#899284]">{{ language.text('No registration is available yet.') }}</p>
+          <p class="mt-3 text-xs text-[#899284]">{{ language.text('Customer accounts are created automatically after an order.') }}</p>
         </div>
       </div>
     </div>

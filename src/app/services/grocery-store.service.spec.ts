@@ -1,6 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { GroceryStoreService } from './grocery-store.service';
+import {
+  detectCustomerAccessSource,
+  GroceryStoreService,
+} from './grocery-store.service';
 import { createTestOrder } from '../testing/store-test-data';
 
 describe('GroceryStoreService', () => {
@@ -21,6 +24,64 @@ describe('GroceryStoreService', () => {
     expect(store.favoriteIds('0987654321').has(product.id)).toBe(false);
     expect(store.toggleFavorite(product.id, '1234567890')).toBe(true);
     expect(store.favoriteIds('1234567890').has(product.id)).toBe(false);
+  });
+
+  it('detects device and browser and creates a normalized account only once', () => {
+    expect(
+      detectCustomerAccessSource(
+        'Mozilla/5.0 (Linux; Android 14; Pixel) AppleWebKit/537.36 Chrome/124.0.0.0 Mobile Safari/537.36',
+      ),
+    ).toEqual({ device: 'mobile', browser: 'Chrome' });
+    expect(
+      detectCustomerAccessSource(
+        'Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 Edg/124.0.0.0',
+      ),
+    ).toEqual({ device: 'web', browser: 'Microsoft Edge' });
+
+    expect(store.createCustomerAccount('Test Customer', '1234567890')).toBeNull();
+    createTestOrder(store);
+    expect(store.createCustomerAccount('  Test Customer ', '123-456-7890')).toMatchObject({
+      created: true,
+      account: {
+        name: 'Test Customer',
+        mobile: '1234567890',
+        source: { device: 'web' },
+      },
+    });
+    expect(store.createCustomerAccount('Other Name', '1234567890')).toMatchObject({
+      created: false,
+      account: { name: 'Test Customer' },
+    });
+    expect(store.createCustomerAccount('Invalid', '123')).toBeNull();
+  });
+
+  it('persists accounts in the store snapshot and restores them', () => {
+    createTestOrder(store);
+    store.createCustomerAccount('Saved Shopper', '1234567890');
+    TestBed.flushEffects();
+    const snapshot = JSON.parse(
+      window.localStorage.getItem('durvijay-store-demo-v1') ?? '{}',
+    ) as { customerAccounts?: unknown[] };
+    expect(snapshot.customerAccounts).toHaveLength(1);
+
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({});
+    const restoredStore = TestBed.inject(GroceryStoreService);
+    expect(restoredStore.getCustomerAccount('1234567890')?.name).toBe('Saved Shopper');
+  });
+
+  it('migrates older store snapshots that do not contain customer accounts', () => {
+    TestBed.flushEffects();
+    const snapshot = JSON.parse(
+      window.localStorage.getItem('durvijay-store-demo-v1') ?? '{}',
+    ) as Record<string, unknown>;
+    delete snapshot['customerAccounts'];
+    window.localStorage.setItem('durvijay-store-demo-v1', JSON.stringify(snapshot));
+
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({});
+    const restoredStore = TestBed.inject(GroceryStoreService);
+    expect(restoredStore.customerAccounts()).toEqual([]);
   });
 
   it('reserves stock for orders and restores it when an active order is cancelled', () => {

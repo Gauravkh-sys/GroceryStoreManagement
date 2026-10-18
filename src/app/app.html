@@ -272,10 +272,12 @@
             <form class="mt-5 space-y-3" (submit)="placeOrder(); $event.preventDefault()">
               <label class="block text-xs font-semibold text-stone-600">
                 {{ language.text('Your name') }}
-                <input class="form-field mt-1.5" [formControl]="checkoutName" autocomplete="name" [placeholder]="language.text('Enter your name')" required>
+                <input class="form-field mt-1.5" [formControl]="checkoutName" maxlength="60" autocomplete="name" [placeholder]="language.text('Enter your name')" required>
               </label>
               @if (checkoutName.touched && !checkoutName.value.trim()) {
                 <p class="text-xs text-rose-700" role="alert">{{ language.text('Enter your name to place the order.') }}</p>
+              } @else if (checkoutName.touched && checkoutName.value.trim().length > 60) {
+                <p class="text-xs text-rose-700" role="alert">{{ language.text('Name must be 60 characters or fewer.') }}</p>
               }
               <label class="block text-xs font-semibold text-stone-600">
                 {{ language.text('Mobile number') }}
@@ -367,6 +369,9 @@
             <p class="mt-1 text-[11px]"><span class="font-semibold">{{ language.text('Payment method') }}:</span> {{ language.text('Not recorded') }}</p>
           </section>
         </div>
+        @if (orderAccountNotice()) {
+          <p class="mb-3 rounded border border-emerald-200 bg-emerald-50 p-3 text-[11px] leading-5 text-emerald-900" role="status">{{ language.text(orderAccountNotice()) }}</p>
+        }
         <h3 class="mb-1.5 text-xs font-bold text-slate-800">{{ language.text('Ordered items summary') }}</h3>
         <div class="overflow-x-auto">
           <table class="bill-items-table w-full min-w-[430px] table-fixed text-left text-[11px]">

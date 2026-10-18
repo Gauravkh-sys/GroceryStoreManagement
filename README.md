@@ -44,9 +44,10 @@ command and `dist/GroceryStoreManagement/browser` as the publish directory.
 - Search products by name and filter the catalog by category.
 - Add products to the basket, adjust quantities, remove items, and see the subtotal, 8% tax, and total update immediately.
 - Place demo orders, track pending/completed/cancelled status, and print or save an itemized bill through the browser's PDF print dialog.
+- Create a demo customer account after a customer's first successful order; the initial password is their mobile number, and the manager can view the recorded access device and browser.
 - Submit product requests for the manager to review.
 - Use the manager dashboard for demo sales and orders; manage inventory, products, categories, and units.
-- All orders, requests, inventory, categories, units, and basket data are stored in browser local storage for this demo. There is no backend synchronization, payment collection, or secure authentication.
+- All orders, customer accounts, requests, inventory, categories, units, and basket data are stored in browser local storage for this demo. Accounts are browser-local demo records, not secure authentication; the mobile-number password must not be reused for a real account. There is no backend synchronization or payment collection.
 - Prepare an optional itemized order message for WhatsApp to the configured store number in `src/app/config/store-contact.ts`.
 - Choose product icons from a searchable, grouped emoji library for groceries, grains, snacks, cleaning supplies, personal care, and farm essentials, or enter a custom emoji.
 - Switch the interface between English and Hindi. Built-in products and categories and the generated WhatsApp order message follow the selected language; custom names remain as entered.
