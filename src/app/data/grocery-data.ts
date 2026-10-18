@@ -1,6 +1,6 @@
 import { Product } from '../models/grocery.model';
 
-export const INITIAL_PRODUCTS: Product[] = [
+export const INITIAL_PRODUCTS: Omit<Product, 'lowStockThreshold'>[] = [
   {
     id: 'bananas',
     name: 'Fresh Organic Bananas',

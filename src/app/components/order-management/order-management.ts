@@ -8,7 +8,11 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { ProductRequest, StoreOrder } from '../../models/grocery.model';
+import {
+  OrderStatus,
+  ProductRequest,
+  StoreOrder,
+} from '../../models/grocery.model';
 import { GroceryStoreService } from '../../services/grocery-store.service';
 import { LanguageService } from '../../services/language.service';
 
@@ -22,6 +26,7 @@ export class OrderManagementComponent {
   readonly manager = input(false);
   readonly customerMobile = input('');
   readonly billRequested = output<StoreOrder>();
+  readonly reorderAdded = output<void>();
   readonly store = inject(GroceryStoreService);
   readonly language = inject(LanguageService);
   readonly actionError = signal('');
@@ -42,12 +47,23 @@ export class OrderManagementComponent {
     this.billRequested.emit(order);
   }
 
-  updateOrder(order: StoreOrder, status: 'completed' | 'cancelled'): void {
+  updateOrder(order: StoreOrder, status: OrderStatus): void {
     if (!this.store.updateOrderStatus(order.id, status)) {
       this.actionError.set('This order status could not be updated.');
       return;
     }
     this.actionError.set('');
+  }
+
+  reorder(order: StoreOrder): void {
+    if (!this.store.reorderOrder(order.id)) {
+      this.actionError.set(
+        'Some items from this order are unavailable or exceed current stock.',
+      );
+      return;
+    }
+    this.actionError.set('');
+    this.reorderAdded.emit();
   }
 
   updateRequest(request: ProductRequest): void {

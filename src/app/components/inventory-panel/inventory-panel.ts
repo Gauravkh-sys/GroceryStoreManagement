@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -10,6 +10,7 @@ import { LanguageService } from '../../services/language.service';
   selector: 'app-inventory-panel',
   imports: [CurrencyPipe, ReactiveFormsModule],
   templateUrl: './inventory-panel.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InventoryPanelComponent {
   private readonly formBuilder = inject(FormBuilder);
@@ -18,6 +19,13 @@ export class InventoryPanelComponent {
   readonly categories = this.store.activeCategories;
   readonly categoryGroups = this.store.activeCategoryGroups;
   readonly units = this.store.units;
+  readonly editingProductId = signal<string | null>(null);
+  readonly formError = signal('');
+  readonly lowStockProducts = computed(() =>
+    this.store.products().filter(
+      (product) => product.stock <= product.lowStockThreshold,
+    ),
+  );
   readonly iconGroups = PRODUCT_ICON_GROUPS;
   readonly iconSearchControl = new FormControl('', { nonNullable: true });
   private readonly iconSearch = toSignal(this.iconSearchControl.valueChanges, {
@@ -61,12 +69,13 @@ export class InventoryPanelComponent {
     category: [this.categories()[0] ?? '', Validators.required],
     price: [0, [Validators.required, Validators.min(0.01)]],
     stock: [1, [Validators.required, Validators.min(0), Validators.max(9999)]],
+    lowStockThreshold: [12, [Validators.required, Validators.min(0), Validators.max(9999)]],
     icon: ['🛒', [Validators.required, Validators.maxLength(12)]],
     unit: ['item', [Validators.required, Validators.maxLength(30)]],
   });
 
   get lowStockCount(): number {
-    return this.store.products().filter((product) => product.stock <= 12).length;
+    return this.lowStockProducts().length;
   }
 
   addProduct(): void {
@@ -76,16 +85,59 @@ export class InventoryPanelComponent {
     }
 
     const product = this.productForm.getRawValue();
-    if (!this.store.addProduct({ ...product, name: product.name.trim() })) {
-      this.productForm.controls.category.setErrors({ unavailable: true });
+    const editingProductId = this.editingProductId();
+    const saved = editingProductId
+      ? this.store.updateProduct(editingProductId, {
+          ...product,
+          name: product.name.trim(),
+        })
+      : this.store.addProduct({ ...product, name: product.name.trim() });
+    if (!saved) {
+      this.formError.set(
+        this.store.isCategoryActive(product.category)
+          ? 'Product could not be saved. Check stock against any basket quantities.'
+          : 'That category is no longer active. Choose an active category.',
+      );
       return;
     }
 
+    this.formError.set('');
+    this.editingProductId.set(null);
+    this.resetForm();
+  }
+
+  editProduct(productId: string): void {
+    const product = this.store.products().find((item) => item.id === productId);
+    if (!product) {
+      this.formError.set('Product could not be found.');
+      return;
+    }
+    this.editingProductId.set(product.id);
+    this.formError.set('');
+    this.productForm.reset({
+      name: product.name,
+      category: product.category,
+      price: product.price,
+      stock: product.stock,
+      lowStockThreshold: product.lowStockThreshold,
+      icon: product.icon,
+      unit: product.unit,
+    });
+  }
+
+  cancelEdit(): void {
+    this.editingProductId.set(null);
+    this.formError.set('');
+    this.resetForm();
+  }
+
+  private resetForm(): void {
     this.productForm.reset({
       name: '',
       category: this.categories()[0] ?? '',
       price: 0,
       stock: 1,
+      lowStockThreshold: 12,
       icon: '🛒',
       unit: 'item',
     });
@@ -98,5 +150,8 @@ export class InventoryPanelComponent {
 
   deleteProduct(productId: string): void {
     this.store.deleteProduct(productId);
+    if (this.editingProductId() === productId) {
+      this.cancelEdit();
+    }
   }
 }

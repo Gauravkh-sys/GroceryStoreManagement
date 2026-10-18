@@ -22,6 +22,7 @@ import {
   ProductRequestStatus,
   StoreOrder,
   OrderStatus,
+  FulfillmentMethod,
 } from '../models/grocery.model';
 
 const DEMO_STORAGE_KEY = 'durvijay-store-demo-v1';
@@ -47,6 +48,7 @@ interface StoreSnapshot {
   units: string[];
   orders: StoreOrder[];
   requests: ProductRequest[];
+  favorites: Record<string, string[]>;
 }
 
 export type CategoryMutationResult =
@@ -67,12 +69,15 @@ export type OrderMutationResult =
 export class GroceryStoreService {
   private readonly document = inject(DOCUMENT);
   private readonly platformId = inject(PLATFORM_ID);
-  private readonly productState = signal<Product[]>(INITIAL_PRODUCTS);
+  private readonly productState = signal<Product[]>(
+    INITIAL_PRODUCTS.map((product) => ({ ...product, lowStockThreshold: 12 })),
+  );
   private readonly cartState = signal<CartItem[]>([]);
   private readonly categoryState = signal<GroceryCategory[]>(DEFAULT_CATEGORIES);
   private readonly unitState = signal<string[]>(INITIAL_UNITS);
   private readonly orderState = signal<StoreOrder[]>([]);
   private readonly requestState = signal<ProductRequest[]>([]);
+  private readonly favoriteState = signal<Record<string, string[]>>({});
   readonly persistenceError = signal(false);
 
   readonly products = this.productState.asReadonly();
@@ -130,17 +135,29 @@ export class GroceryStoreService {
         this.unitState.set(snapshot.units);
         this.orderState.set(snapshot.orders);
         this.requestState.set(snapshot.requests);
+        this.favoriteState.set(snapshot.favorites);
       }
       effect(() => this.saveSnapshot());
     }
   }
 
-  createOrder(customerName: string, customerMobile: string): OrderMutationResult {
+  createOrder(
+    customerName: string,
+    customerMobile: string,
+    fulfillmentMethod: FulfillmentMethod,
+    deliveryAddress = '',
+  ): OrderMutationResult {
     const name = customerName.trim();
     const mobile = customerMobile.replace(/\D/g, '');
     const items = this.cartItems();
 
-    if (!name || !/^\d{10}$/.test(mobile)) {
+    if (
+      !name ||
+      !/^\d{10}$/.test(mobile) ||
+      !['pickup', 'delivery'].includes(fulfillmentMethod) ||
+      (fulfillmentMethod === 'delivery' &&
+        (!deliveryAddress.trim() || deliveryAddress.trim().length > 160))
+    ) {
       return { success: false, reason: 'invalid-customer' };
     }
     if (items.length === 0) {
@@ -162,6 +179,8 @@ export class GroceryStoreService {
       createdAt: new Date().toISOString(),
       customerName: name,
       customerMobile: mobile,
+      fulfillmentMethod,
+      deliveryAddress: fulfillmentMethod === 'delivery' ? deliveryAddress.trim() : '',
       items: items.map(({ product, quantity, lineTotal }) => ({
         productId: product.id,
         name: product.name,
@@ -193,7 +212,14 @@ export class GroceryStoreService {
 
   updateOrderStatus(orderId: string, status: OrderStatus): boolean {
     const order = this.orderState().find((item) => item.id === orderId);
-    if (!order || order.status !== 'pending') {
+    const allowedTransitions: Record<OrderStatus, OrderStatus[]> = {
+      pending: ['preparing', 'cancelled'],
+      preparing: ['ready', 'cancelled'],
+      ready: ['completed', 'cancelled'],
+      completed: [],
+      cancelled: [],
+    };
+    if (!order || !allowedTransitions[order.status].includes(status)) {
       return false;
     }
     if (status === 'cancelled') {
@@ -469,6 +495,9 @@ export class GroceryStoreService {
       !Number.isInteger(product.stock) ||
       product.stock < 0 ||
       product.stock > 9999 ||
+      !Number.isInteger(product.lowStockThreshold) ||
+      product.lowStockThreshold < 0 ||
+      product.lowStockThreshold > 9999 ||
       !this.isCategoryActive(product.category) ||
       !this.unitState().includes(product.unit)
     ) {
@@ -486,11 +515,115 @@ export class GroceryStoreService {
     return true;
   }
 
+  updateProduct(productId: string, product: Omit<Product, 'id'>): boolean {
+    const existing = this.productState().find((item) => item.id === productId);
+    const cartQuantity =
+      this.cartState().find((item) => item.productId === productId)?.quantity ?? 0;
+    const name = product.name.trim();
+    if (
+      !existing ||
+      name.length === 0 ||
+      name.length > 60 ||
+      !Number.isFinite(product.price) ||
+      product.price <= 0 ||
+      !Number.isInteger(product.stock) ||
+      product.stock < cartQuantity ||
+      product.stock > 9999 ||
+      !Number.isInteger(product.lowStockThreshold) ||
+      product.lowStockThreshold < 0 ||
+      product.lowStockThreshold > 9999 ||
+      !this.isCategoryActive(product.category) ||
+      !this.unitState().includes(product.unit)
+    ) {
+      return false;
+    }
+    this.productState.update((products) =>
+      products.map((item) =>
+        item.id === productId ? { ...product, name, id: productId } : item,
+      ),
+    );
+    return true;
+  }
+
+  favoriteIds(customerMobile: string): ReadonlySet<string> {
+    const mobile = customerMobile.replace(/\D/g, '');
+    return new Set(this.favoriteState()[mobile] ?? []);
+  }
+
+  toggleFavorite(productId: string, customerMobile: string): boolean {
+    const mobile = customerMobile.replace(/\D/g, '');
+    if (
+      !/^\d{10}$/.test(mobile) ||
+      !this.productState().some((item) => item.id === productId)
+    ) {
+      return false;
+    }
+    this.favoriteState.update((favorites) => {
+      const customerFavorites = new Set(favorites[mobile] ?? []);
+      if (customerFavorites.has(productId)) {
+        customerFavorites.delete(productId);
+      } else {
+        customerFavorites.add(productId);
+      }
+      return { ...favorites, [mobile]: [...customerFavorites] };
+    });
+    return true;
+  }
+
+  reorderOrder(orderId: string): boolean {
+    const order = this.orderState().find((item) => item.id === orderId);
+    if (!order || order.items.length === 0) {
+      return false;
+    }
+    const quantities = new Map<string, number>();
+    for (const item of order.items) {
+      quantities.set(
+        item.productId,
+        (quantities.get(item.productId) ?? 0) + item.quantity,
+      );
+    }
+    const additions = [...quantities].map(([productId, quantity]) => ({
+      product: this.productState().find((item) => item.id === productId),
+      quantity,
+    }));
+    if (
+      additions.some(
+        ({ product, quantity }) =>
+          !product ||
+          !this.isCategoryActive(product.category) ||
+          product.stock <
+            quantity +
+              (this.cartState().find((item) => item.productId === product.id)
+                ?.quantity ?? 0),
+      )
+    ) {
+      return false;
+    }
+    this.cartState.update((cart) => {
+      const next = new Map(cart.map((item) => [item.productId, item.quantity]));
+      for (const { product, quantity } of additions) {
+        if (product) {
+          next.set(product.id, (next.get(product.id) ?? 0) + quantity);
+        }
+      }
+      return [...next].map(([productId, quantity]) => ({ productId, quantity }));
+    });
+    return true;
+  }
+
   deleteProduct(productId: string): void {
     this.productState.update((products) =>
       products.filter((product) => product.id !== productId),
     );
     this.removeFromCart(productId);
+    this.favoriteState.update((favorites) =>
+      Object.fromEntries(
+        Object.entries(favorites).map(([mobile, ids]) => [
+          mobile,
+          ids.filter((id) => id !== productId),
+        ]),
+      ),
+    );
   }
 
   private readSnapshot(): StoreSnapshot | null {
@@ -521,6 +654,7 @@ export class GroceryStoreService {
       units: this.unitState(),
       orders: this.orderState(),
       requests: this.requestState(),
+      favorites: this.favoriteState(),
     };
     try {
       this.document.defaultView?.localStorage.setItem(
@@ -604,6 +738,9 @@ export class GroceryStoreService {
             !Number.isInteger(product.stock) ||
             product.stock < 0 ||
             product.stock > 9999 ||
+            !Number.isInteger(product.lowStockThreshold) ||
+            product.lowStockThreshold < 0 ||
+            product.lowStockThreshold > 9999 ||
             typeof product.icon !== 'string' ||
             product.icon.length === 0 ||
             product.icon.length > 12 ||
@@ -639,7 +776,14 @@ export class GroceryStoreService {
       Array.isArray(snapshot.orders) &&
       snapshot.orders.every((order) => this.isStoreOrder(order)) &&
       Array.isArray(snapshot.requests) &&
-      snapshot.requests.every((request) => this.isProductRequest(request))
+      snapshot.requests.every((request) => this.isProductRequest(request)) &&
+      this.isRecord(snapshot.favorites) &&
+      Object.entries(snapshot.favorites).every(
+        ([mobile, ids]) =>
+          /^\d{10}$/.test(mobile) &&
+          Array.isArray(ids) &&
+          ids.every((id) => typeof id === 'string' && productIds.has(id)),
+      )
     );
   }
 
@@ -693,7 +837,11 @@ export class GroceryStoreService {
         order.subtotal -
           order.items.reduce((sum, item) => sum + item.lineTotal, 0),
       ) < 0.005 &&
-      ['pending', 'completed', 'cancelled'].includes(order.status ?? '')
+      ['pending', 'preparing', 'ready', 'completed', 'cancelled'].includes(order.status ?? '') &&
+      ['pickup', 'delivery'].includes(order.fulfillmentMethod ?? '') &&
+      typeof order.deliveryAddress === 'string' &&
+      order.deliveryAddress.length <= 160 &&
+      (order.fulfillmentMethod !== 'delivery' || order.deliveryAddress.trim().length > 0)
     );
   }
 
@@ -794,6 +942,12 @@ export class GroceryStoreService {
           this.isRecord(product)
             ? {
                 ...product,
+                lowStockThreshold:
+                  Number.isInteger(product['lowStockThreshold']) &&
+                  (product['lowStockThreshold'] as number) >= 0 &&
+                  (product['lowStockThreshold'] as number) <= 9999
+                    ? product['lowStockThreshold']
+                    : 12,
                 category: migrateProductCategory(product['category']),
               }
             : product,
@@ -822,6 +976,12 @@ export class GroceryStoreService {
           this.isRecord(order) && Array.isArray(order['items'])
             ? {
                 ...order,
+                fulfillmentMethod:
+                  order['fulfillmentMethod'] === 'delivery' ? 'delivery' : 'pickup',
+                deliveryAddress:
+                  typeof order['deliveryAddress'] === 'string'
+                    ? order['deliveryAddress'].slice(0, 160)
+                    : '',
                 items: order['items'].map((item) =>
                   this.isRecord(item)
                     ? {
@@ -841,6 +1001,25 @@ export class GroceryStoreService {
       products,
       units,
       orders,
+      favorites:
+        this.isRecord(value['favorites'])
+          ? Object.fromEntries(
+              Object.entries(value['favorites']).filter(
+                ([mobile, ids]) =>
+                  /^\d{10}$/.test(mobile) &&
+                  Array.isArray(ids) &&
+                  ids.every(
+                    (id) =>
+                      typeof id === 'string' &&
+                      Array.isArray(products) &&
+                      products.some(
+                        (product) =>
+                          this.isRecord(product) && product['id'] === id,
+                      ),
+                  ),
+              ),
+            )
+          : {},
     };
   }
 

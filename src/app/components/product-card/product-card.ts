@@ -13,7 +13,10 @@ export class ProductCardComponent {
   private readonly store = inject(GroceryStoreService);
   readonly language = inject(LanguageService);
   readonly product = input.required<Product>();
+  readonly favoriteEnabled = input(false);
+  readonly isFavorite = input(false);
   readonly add = output<string>();
+  readonly favoriteToggle = output<string>();
   readonly categoryDepartment = computed(() =>
     this.store.categoryDepartment(this.product().category),
   );

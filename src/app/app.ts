@@ -17,7 +17,7 @@ import { ProductRequestComponent } from './components/product-request/product-re
 import { UnitMasterComponent } from './components/unit-master/unit-master';
 import { SalesDashboardComponent } from './components/sales-dashboard/sales-dashboard';
 import { OrderManagementComponent } from './components/order-management/order-management';
-import { StoreOrder } from './models/grocery.model';
+import { FulfillmentMethod, StoreOrder } from './models/grocery.model';
 
 type StoreView =
   | 'shop'
@@ -71,20 +71,48 @@ export class App {
   readonly currentMobile = signal('');
   readonly selectedDepartment = signal('All');
   readonly selectedCategory = signal('All');
+  readonly onlyInStock = signal(false);
+  readonly showFavoritesOnly = signal(false);
   readonly isCartOpen = signal(false);
   readonly toastMessage = signal<string | null>(null);
   readonly selectedBill = signal<StoreOrder | null>(null);
   readonly persistenceError = this.store.persistenceError;
   readonly checkoutName = new FormControl('', { nonNullable: true });
   readonly checkoutMobile = new FormControl('', { nonNullable: true });
+  readonly checkoutFulfillment = new FormControl<FulfillmentMethod>('pickup', {
+    nonNullable: true,
+  });
+  readonly checkoutAddress = new FormControl('', { nonNullable: true });
   readonly searchControl = new FormControl('', { nonNullable: true });
+  readonly minPriceControl = new FormControl('', { nonNullable: true });
+  readonly maxPriceControl = new FormControl('', { nonNullable: true });
   private readonly searchText = toSignal(this.searchControl.valueChanges, {
     initialValue: this.searchControl.value,
   });
+  private readonly minPrice = toSignal(this.minPriceControl.valueChanges, {
+    initialValue: this.minPriceControl.value,
+  });
+  private readonly maxPrice = toSignal(this.maxPriceControl.valueChanges, {
+    initialValue: this.maxPriceControl.value,
+  });
+  readonly invalidPriceRange = computed(() => {
+    const minimum = this.minPrice().trim();
+    const maximum = this.maxPrice().trim();
+    return minimum !== '' && maximum !== '' && Number(minimum) > Number(maximum);
+  });
+  readonly favoriteProductIds = computed(() =>
+    this.store.favoriteIds(this.currentMobile()),
+  );
   readonly filteredProducts = computed(() => {
     const department = this.selectedDepartment();
     const category = this.selectedCategory();
     const query = this.searchText().trim().toLocaleLowerCase();
+    const minimum = this.minPrice().trim() ? Number(this.minPrice()) : null;
+    const maximum = this.maxPrice().trim() ? Number(this.maxPrice()) : null;
+    const favorites = this.favoriteProductIds();
+    if (this.invalidPriceRange()) {
+      return [];
+    }
     return this.store.products().filter((product) => {
       const matchesDepartment =
         department === 'All' ||
@@ -94,7 +122,17 @@ export class App {
       const matchesSearch =
         product.name.toLocaleLowerCase().includes(query) ||
         this.language.product(product).toLocaleLowerCase().includes(query);
-      return matchesDepartment && matchesCategory && matchesSearch;
+      const matchesPrice =
+        (minimum === null || product.price >= minimum) &&
+        (maximum === null || product.price <= maximum);
+      return (
+        matchesDepartment &&
+        matchesCategory &&
+        matchesSearch &&
+        matchesPrice &&
+        (!this.onlyInStock() || product.stock > 0) &&
+        (!this.showFavoritesOnly() || favorites.has(product.id))
+      );
     });
   });
   readonly selectedCategoryDescription = computed(
@@ -105,6 +143,8 @@ export class App {
   );
   readonly whatsappOrderUrl = computed(() => {
     const items = this.store.cartItems();
+    const fulfillment = this.checkoutFulfillment.value;
+    const address = this.checkoutAddress.value.trim();
     const formatPrice = (amount: number) =>
       new Intl.NumberFormat(this.language.locale(), {
         style: 'currency',
@@ -123,6 +163,10 @@ export class App {
       `${this.language.text('Subtotal:')} ${formatPrice(this.store.subtotal())}`,
       `${this.language.text('Tax (8%):')} ${formatPrice(this.store.tax())}`,
       `${this.language.text('Total:')} ${formatPrice(this.store.total())}`,
+      `${this.language.text('Fulfillment:')} ${this.language.text(fulfillment === 'delivery' ? 'Delivery' : 'Pickup')}`,
+      ...(fulfillment === 'delivery' && address
+        ? [`${this.language.text('Delivery address:')} ${address}`]
+        : []),
       '',
       this.language.text('Please confirm availability and delivery or pickup details. Thank you!'),
     ].join('\n');
@@ -173,6 +217,15 @@ export class App {
     this.selectedCategory.set('All');
   }
 
+  clearAllFilters(): void {
+    this.searchControl.setValue('');
+    this.minPriceControl.setValue('');
+    this.maxPriceControl.setValue('');
+    this.onlyInStock.set(false);
+    this.showFavoritesOnly.set(false);
+    this.clearCategoryFilters();
+  }
+
   completeDemoLogin(session: { role: LoginRole; mobile: string }): void {
     this.currentRole.set(session.role);
     this.currentMobile.set(session.mobile);
@@ -192,12 +245,19 @@ export class App {
   placeOrder(): void {
     const name = this.checkoutName.value.trim();
     const mobile = this.checkoutMobile.value.replace(/\D/g, '');
-    if (!name || !/^\d{10}$/.test(mobile)) {
+    const fulfillment = this.checkoutFulfillment.value;
+    const address = this.checkoutAddress.value.trim();
+    if (
+      !name ||
+      !/^\d{10}$/.test(mobile) ||
+      (fulfillment === 'delivery' && (!address || address.length > 160))
+    ) {
       this.checkoutName.markAsTouched();
       this.checkoutMobile.markAsTouched();
+      this.checkoutAddress.markAsTouched();
       return;
     }
-    const result = this.store.createOrder(name, mobile);
+    const result = this.store.createOrder(name, mobile, fulfillment, address);
     if (!result.success) {
       const message =
         result.reason === 'stock-changed'
@@ -208,6 +268,8 @@ export class App {
     }
     this.currentMobile.set(mobile);
     this.checkoutName.reset('');
+    this.checkoutAddress.reset('');
+    this.checkoutFulfillment.reset('pickup');
     this.isCartOpen.set(false);
     this.selectedBill.set(result.order);
   }
@@ -234,6 +296,18 @@ export class App {
         ? this.language.text('Added to your basket')
         : this.language.text('Sorry, this item is out of stock'),
     );
+  }
+
+  toggleFavorite(productId: string): void {
+    if (!this.store.toggleFavorite(productId, this.currentMobile())) {
+      this.showToast(this.language.text('Sign in as a customer to save favorites'));
+    }
+  }
+
+  openReorderedBasket(): void {
+    this.activeView.set('shop');
+    this.isCartOpen.set(true);
+    this.showToast(this.language.text('Items added to your basket'));
   }
 
   changeQuantity(productId: string, quantity: number): void {

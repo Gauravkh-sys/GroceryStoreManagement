@@ -133,10 +133,40 @@
           <p class="mb-5 text-xs text-stone-500">{{ language.text(selectedCategoryDescription()) }}</p>
         }
 
+        <div class="mb-5 flex flex-col gap-3 rounded-2xl border border-[#edf0e8] bg-white p-3 sm:flex-row sm:flex-wrap sm:items-end sm:p-4">
+          <fieldset class="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-end">
+            <legend class="mb-2 text-xs font-semibold text-stone-600 sm:mb-0 sm:mr-2">{{ language.text('Price range') }}</legend>
+            <label class="flex-1 text-xs font-medium text-stone-500">
+              {{ language.text('Minimum price') }}
+              <input class="form-field mt-1" type="number" min="0" step="0.01" [formControl]="minPriceControl" [attr.aria-label]="language.text('Minimum price')">
+            </label>
+            <label class="flex-1 text-xs font-medium text-stone-500">
+              {{ language.text('Maximum price') }}
+              <input class="form-field mt-1" type="number" min="0" step="0.01" [formControl]="maxPriceControl" [attr.aria-label]="language.text('Maximum price')">
+            </label>
+            @if (invalidPriceRange()) {
+              <p class="basis-full text-xs text-rose-700" role="alert">{{ language.text('Minimum price must not exceed maximum price.') }}</p>
+            }
+          </fieldset>
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" class="rounded-full border px-3 py-2 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#31723b]" [class]="onlyInStock() ? 'border-[#31723b] bg-[#31723b] text-white' : 'border-[#e7eae2] bg-white text-[#65705d]'" [attr.aria-pressed]="onlyInStock()" (click)="onlyInStock.set(!onlyInStock())">{{ language.text('In stock only') }}</button>
+            @if (currentRole() === 'customer') {
+              <button type="button" class="rounded-full border px-3 py-2 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#31723b]" [class]="showFavoritesOnly() ? 'border-[#31723b] bg-[#31723b] text-white' : 'border-[#e7eae2] bg-white text-[#65705d]'" [attr.aria-pressed]="showFavoritesOnly()" (click)="showFavoritesOnly.set(!showFavoritesOnly())">{{ language.text('Favorites') }} ({{ favoriteProductIds().size }})</button>
+            }
+            <button type="button" class="rounded-full px-3 py-2 text-xs font-semibold text-[#52634b] underline underline-offset-2 focus:outline-none focus:ring-2 focus:ring-[#31723b]" (click)="clearAllFilters()">{{ language.text('Clear filters') }}</button>
+          </div>
+        </div>
+
         @if (filteredProducts().length > 0) {
           <div class="product-grid grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
             @for (product of filteredProducts(); track product.id) {
-              <app-product-card [product]="product" (add)="addToCart($event)" />
+              <app-product-card
+                [product]="product"
+                [favoriteEnabled]="currentRole() === 'customer'"
+                [isFavorite]="favoriteProductIds().has(product.id)"
+                (add)="addToCart($event)"
+                (favoriteToggle)="toggleFavorite($event)"
+              />
             }
           </div>
         } @else {
@@ -144,7 +174,7 @@
             <span class="text-4xl" aria-hidden="true">🔎</span>
             <h3 class="mt-3 font-semibold text-[#34412f]">{{ language.text('Nothing on the shelf') }}</h3>
             <p class="mt-1 text-sm text-stone-500">{{ language.text('Try a different search or category.') }}</p>
-            <button type="button" class="mt-4 text-sm font-semibold text-[#31723b] underline underline-offset-4" (click)="searchControl.setValue(''); clearCategoryFilters()">{{ language.text('Clear filters') }}</button>
+            <button type="button" class="mt-4 text-sm font-semibold text-[#31723b] underline underline-offset-4" (click)="clearAllFilters()">{{ language.text('Clear filters') }}</button>
           </div>
         }
       </section>
@@ -176,6 +206,7 @@
         [manager]="currentRole() === 'manager'"
         [customerMobile]="currentMobile()"
         (billRequested)="showBill($event)"
+        (reorderAdded)="openReorderedBasket()"
       />
     }
     @if (activeView() === 'shop') {
@@ -253,6 +284,25 @@
               @if (isCheckoutMobileInvalid()) {
                 <p class="text-xs text-rose-700" role="alert">{{ language.text('Enter a valid 10-digit mobile number.') }}</p>
               }
+              <label class="block text-xs font-semibold text-stone-600">
+                {{ language.text('Fulfillment') }}
+                <select class="form-field mt-1.5" [formControl]="checkoutFulfillment">
+                  <option value="pickup">{{ language.text('Pickup') }}</option>
+                  <option value="delivery">{{ language.text('Delivery') }}</option>
+                </select>
+              </label>
+              @if (checkoutFulfillment.value === 'delivery') {
+                <label class="block text-xs font-semibold text-stone-600">
+                  {{ language.text('Delivery address') }}
+                  <textarea class="form-field mt-1.5 min-h-20 resize-y" [formControl]="checkoutAddress" maxlength="160" autocomplete="street-address" [placeholder]="language.text('Enter your delivery address')" required></textarea>
+                </label>
+                @if (checkoutAddress.touched && !checkoutAddress.value.trim()) {
+                  <p class="text-xs text-rose-700" role="alert">{{ language.text('Enter a delivery address.') }}</p>
+                }
+                @if (checkoutAddress.value.length > 160) {
+                  <p class="text-xs text-rose-700" role="alert">{{ language.text('Delivery address must be 160 characters or fewer.') }}</p>
+                }
+              }
               <p class="text-[10px] leading-4 text-amber-800">{{ language.text('Demo only: order details are saved in this browser, not sent to a live store.') }}</p>
               <button type="submit" class="flex w-full items-center justify-center gap-2 rounded-xl bg-[#31723b] py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#245e2e] focus:outline-none focus:ring-2 focus:ring-[#31723b] focus:ring-offset-2">
                 {{ language.text('Place order') }} <span aria-hidden="true">→</span>
@@ -310,7 +360,10 @@
           </section>
           <section class="rounded border border-slate-200 bg-slate-50 p-3" aria-labelledby="bill-order-heading">
             <h3 id="bill-order-heading" class="border-b border-slate-300 pb-1 text-[10px] font-bold uppercase tracking-wide text-[#13813c]">{{ language.text('Order details') }}</h3>
-            <p class="mt-2 text-[11px]"><span class="font-semibold">{{ language.text('Fulfillment') }}:</span> {{ language.text('Not specified') }}</p>
+            <p class="mt-2 text-[11px]"><span class="font-semibold">{{ language.text('Fulfillment') }}:</span> {{ language.text(bill.fulfillmentMethod === 'delivery' ? 'Delivery' : 'Pickup') }}</p>
+            @if (bill.fulfillmentMethod === 'delivery') {
+              <p class="mt-1 break-words text-[11px]"><span class="font-semibold">{{ language.text('Delivery address') }}:</span> {{ bill.deliveryAddress }}</p>
+            }
             <p class="mt-1 text-[11px]"><span class="font-semibold">{{ language.text('Payment method') }}:</span> {{ language.text('Not recorded') }}</p>
           </section>
         </div>
@@ -331,7 +384,7 @@
           <span class="text-slate-600">{{ language.text('Estimated tax (8%)') }}</span><span class="text-right">{{ bill.tax | currency:'INR':'symbol':'1.2-2':language.locale() }}</span>
           <span class="border-t border-[#159447] pt-1.5 text-xs font-bold text-slate-900">{{ language.text('Total amount') }}</span><span class="border-t border-[#159447] pt-1.5 text-right text-xs font-bold text-slate-900">{{ bill.total | currency:'INR':'symbol':'1.2-2':language.locale() }}</span>
         </div>
-        <p class="bill-footer mt-4 rounded bg-slate-100 px-3 py-2 text-[9px] leading-4 text-slate-600">{{ language.text('Demo receipt only. Fulfillment and payment details are not recorded by this demo.') }} {{ language.text('Thank you for shopping with us!') }}</p>
+        <p class="bill-footer mt-4 rounded bg-slate-100 px-3 py-2 text-[9px] leading-4 text-slate-600">{{ language.text('Demo receipt only. Payment details are not recorded by this demo.') }} {{ language.text('Thank you for shopping with us!') }}</p>
         <p class="no-print mt-3 text-center text-xs text-slate-500">{{ language.text('Choose “Save as PDF” in your browser print dialog to download this bill.') }}</p>
       </div>
     </div>

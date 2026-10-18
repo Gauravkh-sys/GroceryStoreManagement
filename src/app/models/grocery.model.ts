@@ -13,6 +13,7 @@ export interface Product {
   category: ProductCategory;
   price: number;
   stock: number;
+  lowStockThreshold: number;
   icon: string;
   unit: string;
 }
@@ -27,7 +28,13 @@ export interface DetailedCartItem extends CartItem {
   lineTotal: number;
 }
 
-export type OrderStatus = 'pending' | 'completed' | 'cancelled';
+export type OrderStatus =
+  | 'pending'
+  | 'preparing'
+  | 'ready'
+  | 'completed'
+  | 'cancelled';
+export type FulfillmentMethod = 'pickup' | 'delivery';
 
 export interface OrderLine {
   productId: string;
@@ -45,6 +52,8 @@ export interface StoreOrder {
   createdAt: string;
   customerName: string;
   customerMobile: string;
+  fulfillmentMethod: FulfillmentMethod;
+  deliveryAddress: string;
   items: OrderLine[];
   subtotal: number;
   tax: number;
