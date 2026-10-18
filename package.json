@@ -6,7 +6,8 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "test:ci": "node -e \"require('node:fs').mkdirSync('reports', { recursive: true })\" && ng test --watch=false --reporters=junit --output-file=reports/junit.xml"
   },
   "private": true,
   "packageManager": "npm@12.2.0",
@@ -29,9 +30,11 @@
     "@netlify/functions": "^6.0.2",
     "@tailwindcss/postcss": "^4.3.3",
     "drizzle-kit": "^1.0.0-beta.22",
+    "jsdom": "^30.1.3",
     "postcss": "^8.5.30",
     "prettier": "^3.8.1",
     "tailwindcss": "^4.3.3",
-    "typescript": "~5.9.2"
+    "typescript": "~5.9.2",
+    "vitest": "^4.1.12"
   }
 }

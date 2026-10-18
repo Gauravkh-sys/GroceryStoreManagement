@@ -19,6 +19,15 @@ Create an optimized production build with:
 npm run build
 ```
 
+Run the unit tests with:
+
+```bash
+npm test
+```
+
+GitLab CI runs the same suite and publishes a JUnit test report in the pipeline
+and as a downloadable artifact.
+
 ## Deploy to Netlify
 
 The included `netlify.toml` configures Netlify to use Node.js 22.22.2, run
